@@ -644,6 +644,7 @@
       let timerInterval = null;
       let isGameOver = false;
       let hasStarted = false;
+      let isAutoMatching = false;
 
       function initGame() {
         board = [];
@@ -761,7 +762,7 @@
       }
 
       function handleTileClick(row, col) {
-        if (isAnimating || !board[row][col] || isGameOver) return;
+        if (isAnimating || !board[row][col] || isGameOver || isAutoMatching) return;
 
         // Start timer on first interaction
         if (!hasStarted) {
@@ -1062,6 +1063,7 @@
           }
 
           isAnimating = false;
+          isAutoMatching = false;
           
           // Resume timer if it's not running and game isn't over
           if (!timerInterval && !isGameOver && hasStarted) {
@@ -1143,6 +1145,7 @@
 
       function performAutoMatch(tiles) {
         isAnimating = true;
+        isAutoMatching = true;
 
         // Pause the timer during auto-match
         if (timerInterval) {

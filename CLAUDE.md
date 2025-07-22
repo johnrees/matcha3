@@ -32,6 +32,8 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 5. **Dynamic Instructions**: Text updates to show which tile types are still needed
 6. **Early Mismatch Detection**: Tiles shake when second selection doesn't match the first
 7. **Auto-Match**: Final 3 tiles automatically match with visual sequence
+   - Timer pauses during auto-match animation
+   - User input disabled during auto-match
 8. **Timer System**:
    - 30-second countdown starts on first tile selection
    - 5-second bonus for each successful match (capped at 30 seconds)
@@ -51,6 +53,7 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 - `hasStarted`: Boolean tracking if timer has started
 - `isGameOver`: Boolean for game over state
 - `isAnimating`: Prevents interactions during animations
+- `isAutoMatching`: Prevents interactions during auto-match sequence
 
 ### Tile Object Structure
 
@@ -118,11 +121,14 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 1. **Early Mismatch Detection**: Second tile selection triggers immediate validation with shake animation
 2. **Enhanced Fade Effect**: Unavailable tiles now fade to 15% opacity with grayscale filter
 3. **Auto-Match System**: Final 3 tiles automatically match with staggered selection animation
+   - Timer pauses during animation to prevent unfair game over
+   - All user input blocked during auto-match sequence
 4. **Timer System**:
    - 30-second countdown with visual progress bar
    - Timer starts on first tile selection
    - 5-second bonus per match (max 30 seconds)
    - Warning animation when under 10 seconds
+   - Pauses during auto-match to ensure fairness
 5. **Dual Progress Bars**:
    - Gold bar shows level completion progress
    - Green/red bar shows time remaining
@@ -132,6 +138,7 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
    - No zooming or scrolling allowed
    - Touch-optimized with larger buttons
    - Prevents pull-to-refresh and double-tap zoom
+   - Fixed gradient background issue on iOS
 
 ### Visual Enhancements
 
@@ -140,6 +147,7 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 - Smooth transitions for time bonuses
 - Both progress bars match game grid width
 - Mobile-specific sizing for all UI elements
+- Gradient background properly displays on all devices
 
 ## Development Notes
 
