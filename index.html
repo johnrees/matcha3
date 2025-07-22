@@ -199,6 +199,19 @@
         }
       }
 
+      .error-pulse {
+        animation: errorPulse 0.5s ease;
+      }
+
+      @keyframes errorPulse {
+        0%, 100% {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        }
+        50% {
+          background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+        }
+      }
+
       .match-line {
         position: absolute;
         height: 3px;
@@ -963,6 +976,9 @@
       function handleMismatch() {
         isAnimating = true;
 
+        // Add red pulse to background
+        document.body.classList.add("error-pulse");
+
         // Get tile elements and add shake animation
         selectedTiles.forEach(({ row, col }) => {
           const tile = document.querySelector(
@@ -979,6 +995,9 @@
           document.querySelectorAll(".tile.shake").forEach((tile) => {
             tile.classList.remove("shake");
           });
+          
+          // Remove error pulse
+          document.body.classList.remove("error-pulse");
 
           // Clear selection
           selectedTiles = [];
@@ -1002,7 +1021,6 @@
         } else {
           // Invalid match - use the same shake animation
           handleMismatch();
-          showMessage("Not the same sound!");
         }
       }
 

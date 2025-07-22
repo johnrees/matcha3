@@ -92,9 +92,10 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 - Starts with 12 kana families per level
 - Each level introduces new characters
 - Total of 20 basic kana implemented
-- Level 2 uses remaining 8 kana plus 4 from beginning to fill grid
+- Level 2 uses remaining 8 kana plus 4 randomly selected from previous kana
 - After completing all kana, game cycles back to level 1
 - Timer resets to 30 seconds when advancing levels
+- Tiles are shuffled using Fisher-Yates algorithm for random board layouts
 
 ## Future Enhancements
 
@@ -118,7 +119,7 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 
 ### New Features Added
 
-1. **Early Mismatch Detection**: Second tile selection triggers immediate validation with shake animation
+1. **Early Mismatch Detection**: Second tile selection triggers immediate validation with shake animation and red background pulse
 2. **Enhanced Fade Effect**: Unavailable tiles now fade to 15% opacity with grayscale filter
 3. **Auto-Match System**: Final 3 tiles automatically match with staggered selection animation
    - Timer pauses during animation to prevent unfair game over
@@ -142,7 +143,8 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 
 ### Visual Enhancements
 
-- Shake animation for incorrect matches
+- Shake animation for incorrect matches with red background pulse
+- No text message for mismatches - visual feedback only
 - Timer bar changes to red when time is low
 - Smooth transitions for time bonuses
 - Both progress bars match game grid width
