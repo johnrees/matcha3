@@ -791,6 +791,9 @@
           // Re-render board
           renderBoard();
 
+          // Check for auto-match condition (only 3 tiles left)
+          checkAutoMatch();
+
           // Check if level complete
           if (matches === totalMatches) {
             setTimeout(() => {
@@ -857,6 +860,54 @@
 
         boardEl.appendChild(combo);
         setTimeout(() => combo.remove(), 1500);
+      }
+
+      function checkAutoMatch() {
+        // Count remaining tiles
+        let remainingTiles = [];
+        for (let row = 0; row < 6; row++) {
+          for (let col = 0; col < 6; col++) {
+            if (board[row][col]) {
+              remainingTiles.push({ row, col, tile: board[row][col] });
+            }
+          }
+        }
+
+        // If exactly 3 tiles remain, auto-match them
+        if (remainingTiles.length === 3) {
+          // Verify they're from the same kana family (they should be)
+          const kanaIndex = remainingTiles[0].tile.kanaIndex;
+          const allSame = remainingTiles.every(t => t.tile.kanaIndex === kanaIndex);
+          
+          if (allSame) {
+            setTimeout(() => performAutoMatch(remainingTiles), 300);
+          }
+        }
+      }
+
+      function performAutoMatch(tiles) {
+        isAnimating = true;
+        
+        // Sort tiles to ensure consistent order: hiragana, katakana, romaji
+        const typeOrder = { hiragana: 0, katakana: 1, romaji: 2 };
+        tiles.sort((a, b) => typeOrder[a.tile.type] - typeOrder[b.tile.type]);
+        
+        // Animate selection of each tile with delay
+        tiles.forEach((tileData, index) => {
+          setTimeout(() => {
+            selectedTiles.push({ row: tileData.row, col: tileData.col });
+            updateSelectedTiles();
+            updateFadedTiles();
+            updateNeededTypes();
+            
+            // After all three are selected, process the match
+            if (index === 2) {
+              setTimeout(() => {
+                checkMatch();
+              }, 400);
+            }
+          }, index * 250); // 250ms delay between each selection
+        });
       }
 
       function showHint() {
