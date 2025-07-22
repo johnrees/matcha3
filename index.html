@@ -148,6 +148,22 @@
         }
       }
 
+      .tile.shake {
+        animation: shake 0.5s ease;
+      }
+
+      @keyframes shake {
+        0%, 100% {
+          transform: translateX(0);
+        }
+        10%, 30%, 50%, 70%, 90% {
+          transform: translateX(-8px);
+        }
+        20%, 40%, 60%, 80% {
+          transform: translateX(8px);
+        }
+      }
+
       .match-line {
         position: absolute;
         height: 3px;
@@ -539,6 +555,18 @@
         updateFadedTiles();
         updateNeededTypes();
 
+        // Check for early mismatch when second tile is selected
+        if (selectedTiles.length === 2) {
+          const tile1 = board[selectedTiles[0].row][selectedTiles[0].col];
+          const tile2 = board[selectedTiles[1].row][selectedTiles[1].col];
+          
+          if (tile1.kanaIndex !== tile2.kanaIndex) {
+            // Mismatch! Shake both tiles and clear selection
+            handleMismatch();
+            return;
+          }
+        }
+
         // Check if we have exactly 3 selected
         if (selectedTiles.length === 3) {
           checkMatch();
@@ -667,6 +695,35 @@
         boardEl.appendChild(line);
       }
 
+      function handleMismatch() {
+        isAnimating = true;
+        
+        // Get tile elements and add shake animation
+        selectedTiles.forEach(({ row, col }) => {
+          const tile = document.querySelector(
+            `[data-row="${row}"][data-col="${col}"]`
+          );
+          if (tile) {
+            tile.classList.add("shake");
+          }
+        });
+
+        // Clear selection after shake animation
+        setTimeout(() => {
+          // Remove shake class
+          document.querySelectorAll(".tile.shake").forEach(tile => {
+            tile.classList.remove("shake");
+          });
+          
+          // Clear selection
+          selectedTiles = [];
+          updateSelectedTiles();
+          updateFadedTiles();
+          updateNeededTypes();
+          isAnimating = false;
+        }, 500);
+      }
+
       function checkMatch() {
         const tiles = selectedTiles.map(({ row, col }) =>
           board[row][col]
@@ -682,14 +739,8 @@
           // Valid match!
           processMatch();
         } else {
-          // Invalid match
-          setTimeout(() => {
-            selectedTiles = [];
-            updateSelectedTiles();
-            updateFadedTiles();
-            updateNeededTypes();
-          }, 300);
-
+          // Invalid match - use the same shake animation
+          handleMismatch();
           showMessage("Not the same sound!");
         }
       }
