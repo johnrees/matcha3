@@ -1,0 +1,880 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Kana Match Master</title>
+    <style>
+      @import url("https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@500;700;900&display=swap");
+
+      * {
+        box-sizing: border-box;
+      }
+
+      body {
+        margin: 0;
+        padding: 0;
+        font-family: "Noto Sans JP", -apple-system, sans-serif;
+        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        min-height: 100vh;
+        color: #fff;
+      }
+
+      .game-container {
+        text-align: center;
+        padding: 20px;
+      }
+
+      h1 {
+        margin: 0 0 30px 0;
+        font-size: 3em;
+        font-weight: 900;
+        text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.3);
+      }
+
+      .stats {
+        display: flex;
+        justify-content: center;
+        margin-bottom: 20px;
+        gap: 20px;
+      }
+
+      .stat {
+        background: rgba(255, 255, 255, 0.15);
+        padding: 15px 30px;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+        border: 2px solid rgba(255, 255, 255, 0.3);
+        font-size: 1.1em;
+      }
+
+      .stat span {
+        font-weight: bold;
+        font-size: 1.3em;
+        color: #ffd700;
+      }
+
+      .game-board {
+        display: inline-grid;
+        grid-template-columns: repeat(6, 85px);
+        grid-template-rows: repeat(6, 85px);
+        gap: 8px;
+        background: rgba(0, 0, 0, 0.3);
+        padding: 20px;
+        border-radius: 20px;
+        position: relative;
+        box-shadow: 0 10px 30px rgba(0, 0, 0, 0.5);
+      }
+
+      .tile {
+        width: 85px;
+        height: 85px;
+        display: flex;
+        align-items: center;
+        justify-content: center;
+        cursor: pointer;
+        transition: all 0.3s ease;
+        position: relative;
+        user-select: none;
+        border-radius: 12px;
+        border: 3px solid transparent;
+        font-size: 2em;
+        font-weight: 700;
+        color: #333;
+        box-shadow: 0 4px 8px rgba(0, 0, 0, 0.2);
+      }
+
+      /* Simple color coding for each script type */
+      .tile.hiragana {
+        background: #ffb6c1;
+        border-color: #ff69b4;
+      }
+
+      .tile.katakana {
+        background: #87ceeb;
+        border-color: #4682b4;
+      }
+
+      .tile.romaji {
+        background: #90ee90;
+        border-color: #32cd32;
+      }
+
+      /* Faded state for tiles of same type */
+      .tile.faded {
+        opacity: 0.3;
+        transform: scale(0.95);
+        cursor: not-allowed;
+      }
+
+      .tile.empty {
+        background: transparent;
+        border: none;
+        box-shadow: none;
+        cursor: default;
+        pointer-events: none;
+      }
+
+      .tile:not(.faded):not(.empty):hover {
+        transform: translateY(-3px) scale(1.05);
+        box-shadow: 0 6px 12px rgba(0, 0, 0, 0.3);
+      }
+
+      .tile.selected {
+        transform: scale(1.1);
+        box-shadow: 0 0 20px rgba(255, 215, 0, 0.8);
+        border-color: #ffd700 !important;
+        border-width: 4px;
+      }
+
+      .tile.match-animation {
+        animation: matchDisappear 0.6s ease forwards;
+      }
+
+      @keyframes matchDisappear {
+        0% {
+          transform: scale(1) rotate(0deg);
+          opacity: 1;
+        }
+        50% {
+          transform: scale(1.3) rotate(180deg);
+        }
+        100% {
+          transform: scale(0) rotate(360deg);
+          opacity: 0;
+        }
+      }
+
+      .match-line {
+        position: absolute;
+        height: 3px;
+        background: #ffd700;
+        transform-origin: left center;
+        pointer-events: none;
+        z-index: 10;
+        border-radius: 2px;
+        box-shadow: 0 0 10px rgba(255, 215, 0, 0.5);
+        opacity: 0.8;
+      }
+
+      .combo-text {
+        position: absolute;
+        font-size: 2.5em;
+        font-weight: 900;
+        animation: comboFloat 1.5s ease-out forwards;
+        pointer-events: none;
+        text-shadow: 3px 3px 6px rgba(0, 0, 0, 0.5);
+        color: #ffd700;
+        z-index: 100;
+      }
+
+      @keyframes comboFloat {
+        0% {
+          transform: translate(-50%, -50%) scale(0);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, -120px) scale(1.5);
+          opacity: 0;
+        }
+      }
+
+      button {
+        background: linear-gradient(135deg, #ffd700, #ffed4e);
+        color: #333;
+        border: none;
+        padding: 15px 35px;
+        font-size: 1.2em;
+        font-weight: bold;
+        border-radius: 30px;
+        cursor: pointer;
+        margin: 10px 5px;
+        transition: all 0.3s ease;
+        box-shadow: 0 4px 15px rgba(255, 215, 0, 0.3);
+      }
+
+      button:hover:not(:disabled) {
+        transform: translateY(-2px);
+        box-shadow: 0 6px 20px rgba(255, 215, 0, 0.5);
+      }
+
+      button:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+      }
+
+      .legend {
+        margin-top: 30px;
+        display: flex;
+        justify-content: center;
+        gap: 40px;
+        background: rgba(255, 255, 255, 0.1);
+        padding: 15px 30px;
+        border-radius: 20px;
+        backdrop-filter: blur(10px);
+      }
+
+      .legend-item {
+        display: flex;
+        align-items: center;
+        gap: 10px;
+        font-size: 1.1em;
+      }
+
+      .legend-box {
+        width: 30px;
+        height: 30px;
+        border-radius: 6px;
+        border: 2px solid;
+      }
+
+      .legend-box.hiragana {
+        background: #ffb6c1;
+        border-color: #ff69b4;
+      }
+
+      .legend-box.katakana {
+        background: #87ceeb;
+        border-color: #4682b4;
+      }
+
+      .legend-box.romaji {
+        background: #90ee90;
+        border-color: #32cd32;
+      }
+
+      .message {
+        position: fixed;
+        top: 50%;
+        left: 50%;
+        transform: translate(-50%, -50%);
+        background: rgba(0, 0, 0, 0.9);
+        color: #fff;
+        padding: 30px 50px;
+        border-radius: 20px;
+        font-size: 2em;
+        font-weight: bold;
+        z-index: 1000;
+        display: none;
+      }
+
+      .message.show {
+        display: block;
+        animation: messagePopup 2s ease forwards;
+      }
+
+      @keyframes messagePopup {
+        0% {
+          transform: translate(-50%, -50%) scale(0);
+          opacity: 0;
+        }
+        20% {
+          transform: translate(-50%, -50%) scale(1.1);
+          opacity: 1;
+        }
+        80% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 0;
+        }
+      }
+
+      .particle {
+        position: absolute;
+        pointer-events: none;
+        font-size: 2em;
+        animation: particle 1s ease-out forwards;
+        z-index: 50;
+      }
+
+      @keyframes particle {
+        0% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(calc(-50% + var(--dx)), calc(-50% + var(--dy)))
+            scale(0);
+          opacity: 0;
+        }
+      }
+
+      .progress-bar {
+        margin: 20px auto;
+        width: 300px;
+        height: 20px;
+        background: rgba(0, 0, 0, 0.3);
+        border-radius: 10px;
+        overflow: hidden;
+      }
+
+      .progress-fill {
+        height: 100%;
+        background: linear-gradient(90deg, #ffd700, #ffed4e);
+        width: 0%;
+        transition: width 0.5s ease;
+      }
+
+      .needed-types {
+        margin: 10px 0;
+        font-size: 1.2em;
+        min-height: 30px;
+        color: #ffd700;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.5);
+      }
+    </style>
+  </head>
+  <body>
+    <div class="game-container">
+      <h1>🎌 Kana Match Master 🎌</h1>
+      <div class="stats">
+        <div class="stat">Score: <span id="score">0</span></div>
+        <div class="stat">
+          Matches: <span id="matches">0</span> / <span id="totalMatches"
+          >12</span>
+        </div>
+      </div>
+      <div class="progress-bar">
+        <div class="progress-fill" id="progressFill"></div>
+      </div>
+      <div class="needed-types" id="neededTypes"></div>
+      <div class="game-board" id="gameBoard"></div>
+      <div>
+        <button onclick="initGame()">New Game</button>
+        <button onclick="showHint()" id="hintBtn">Show Hint</button>
+      </div>
+      <div class="legend">
+        <div class="legend-item">
+          <div class="legend-box hiragana"></div>
+          <span>Hiragana (ひらがな)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-box katakana"></div>
+          <span>Katakana (カタカナ)</span>
+        </div>
+        <div class="legend-item">
+          <div class="legend-box romaji"></div>
+          <span>Romaji (ABC)</span>
+        </div>
+      </div>
+    </div>
+
+    <div class="message" id="message"></div>
+
+    <script>
+      const kanaMap = [
+        { hiragana: "あ", katakana: "ア", romaji: "a" },
+        { hiragana: "い", katakana: "イ", romaji: "i" },
+        { hiragana: "う", katakana: "ウ", romaji: "u" },
+        { hiragana: "え", katakana: "エ", romaji: "e" },
+        { hiragana: "お", katakana: "オ", romaji: "o" },
+        { hiragana: "か", katakana: "カ", romaji: "ka" },
+        { hiragana: "き", katakana: "キ", romaji: "ki" },
+        { hiragana: "く", katakana: "ク", romaji: "ku" },
+        { hiragana: "け", katakana: "ケ", romaji: "ke" },
+        { hiragana: "こ", katakana: "コ", romaji: "ko" },
+        { hiragana: "さ", katakana: "サ", romaji: "sa" },
+        { hiragana: "し", katakana: "シ", romaji: "shi" },
+        { hiragana: "す", katakana: "ス", romaji: "su" },
+        { hiragana: "せ", katakana: "セ", romaji: "se" },
+        { hiragana: "そ", katakana: "ソ", romaji: "so" },
+        { hiragana: "た", katakana: "タ", romaji: "ta" },
+        { hiragana: "ち", katakana: "チ", romaji: "chi" },
+        { hiragana: "つ", katakana: "ツ", romaji: "tsu" },
+        { hiragana: "て", katakana: "テ", romaji: "te" },
+        { hiragana: "と", katakana: "ト", romaji: "to" },
+      ];
+
+      let board = [];
+      let selectedTiles = [];
+      let score = 0;
+      let matches = 0;
+      let totalMatches = 12;
+      let isAnimating = false;
+      let kanaPool = [];
+      let level = 1;
+
+      function initGame() {
+        board = [];
+        selectedTiles = [];
+        score = 0;
+        matches = 0;
+        updateStats();
+        updateProgress();
+        updateNeededTypes();
+
+        // Select kana for this level
+        const startIndex = (level - 1) * 12;
+        kanaPool = kanaMap.slice(startIndex, startIndex + 12);
+
+        // Create tiles for the board
+        const tiles = [];
+        kanaPool.forEach((kana, index) => {
+          tiles.push({
+            kana,
+            kanaIndex: index,
+            type: "hiragana",
+            display: kana.hiragana,
+          });
+          tiles.push({
+            kana,
+            kanaIndex: index,
+            type: "katakana",
+            display: kana.katakana,
+          });
+          tiles.push({
+            kana,
+            kanaIndex: index,
+            type: "romaji",
+            display: kana.romaji,
+          });
+        });
+
+        // Shuffle tiles
+        for (let i = tiles.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [tiles[i], tiles[j]] = [tiles[j], tiles[i]];
+        }
+
+        // Fill the board
+        let tileIndex = 0;
+        for (let row = 0; row < 6; row++) {
+          board[row] = [];
+          for (let col = 0; col < 6; col++) {
+            board[row][col] = tiles[tileIndex++];
+          }
+        }
+
+        renderBoard();
+      }
+
+      function renderBoard() {
+        const gameBoard = document.getElementById("gameBoard");
+        gameBoard.innerHTML = "";
+
+        for (let row = 0; row < 6; row++) {
+          for (let col = 0; col < 6; col++) {
+            const tile = board[row][col];
+
+            const tileElement = document.createElement("div");
+            if (!tile) {
+              tileElement.className = "tile empty";
+            } else {
+              tileElement.className = `tile ${tile.type}`;
+              tileElement.dataset.row = row;
+              tileElement.dataset.col = col;
+              tileElement.textContent = tile.display;
+              tileElement.addEventListener(
+                "click",
+                () => handleTileClick(row, col),
+              );
+            }
+
+            gameBoard.appendChild(tileElement);
+          }
+        }
+
+        updateFadedTiles();
+      }
+
+      function handleTileClick(row, col) {
+        if (isAnimating || !board[row][col]) return;
+
+        const clickedTile = { row, col };
+
+        // Check if already selected
+        const existingIndex = selectedTiles.findIndex((t) =>
+          t.row === row && t.col === col
+        );
+
+        if (existingIndex !== -1) {
+          // Deselect
+          selectedTiles.splice(existingIndex, 1);
+          updateSelectedTiles();
+          updateFadedTiles();
+          updateNeededTypes();
+          return;
+        }
+
+        // Check if this type is already selected
+        const clickedType = board[row][col].type;
+        const alreadyHasType = selectedTiles.some((t) =>
+          board[t.row][t.col].type === clickedType
+        );
+
+        if (alreadyHasType) {
+          // Don't allow selecting same type twice
+          return;
+        }
+
+        // If we already have 3 selected, this shouldn't happen
+        if (selectedTiles.length >= 3) {
+          return;
+        }
+
+        // Add to selection
+        selectedTiles.push(clickedTile);
+        updateSelectedTiles();
+        updateFadedTiles();
+        updateNeededTypes();
+
+        // Check if we have exactly 3 selected
+        if (selectedTiles.length === 3) {
+          checkMatch();
+        }
+      }
+
+      function updateFadedTiles() {
+        // Get selected types
+        const selectedTypes = selectedTiles.map(({ row, col }) =>
+          board[row][col].type
+        );
+
+        // Update all tiles
+        document.querySelectorAll(".tile").forEach((tile, index) => {
+          const row = Math.floor(index / 6);
+          const col = index % 6;
+
+          if (!board[row][col] || tile.classList.contains("empty")) {
+            return;
+          }
+
+          const tileType = board[row][col].type;
+          const isSelected = selectedTiles.some((t) =>
+            t.row === row && t.col === col
+          );
+
+          if (!isSelected && selectedTypes.includes(tileType)) {
+            tile.classList.add("faded");
+          } else {
+            tile.classList.remove("faded");
+          }
+        });
+      }
+
+      function updateSelectedTiles() {
+        // Clear all selections and lines
+        document.querySelectorAll(".tile").forEach((tile) => {
+          tile.classList.remove("selected");
+        });
+        document.querySelectorAll(".match-line").forEach((line) =>
+          line.remove()
+        );
+
+        // Highlight selected tiles
+        selectedTiles.forEach(({ row, col }) => {
+          const tile = document.querySelector(
+            `[data-row="${row}"][data-col="${col}"]`,
+          );
+          if (tile) {
+            tile.classList.add("selected");
+          }
+        });
+
+        // Draw lines between selected tiles
+        if (selectedTiles.length >= 2) {
+          for (let i = 0; i < selectedTiles.length - 1; i++) {
+            drawLine(selectedTiles[i], selectedTiles[i + 1]);
+          }
+          if (selectedTiles.length === 3) {
+            drawLine(selectedTiles[2], selectedTiles[0]);
+          }
+        }
+      }
+
+      function updateNeededTypes() {
+        const neededEl = document.getElementById("neededTypes");
+
+        if (selectedTiles.length === 0) {
+          neededEl.textContent =
+            "Select 3 matching characters (one of each type)";
+          return;
+        }
+
+        const selectedTypes = selectedTiles.map(({ row, col }) =>
+          board[row][col].type
+        );
+        const allTypes = ["hiragana", "katakana", "romaji"];
+        const neededTypes = allTypes.filter((type) =>
+          !selectedTypes.includes(type)
+        );
+
+        if (neededTypes.length > 0) {
+          const typeNames = {
+            "hiragana": "Hiragana (pink)",
+            "katakana": "Katakana (blue)",
+            "romaji": "Romaji (green)",
+          };
+          neededEl.textContent = `Need: ${
+            neededTypes.map((t) => typeNames[t]).join(" and ")
+          }`;
+        } else {
+          neededEl.textContent = "Complete! All 3 types selected";
+        }
+      }
+
+      function drawLine(tile1, tile2) {
+        const boardEl = document.getElementById("gameBoard");
+        const t1 = document.querySelector(
+          `[data-row="${tile1.row}"][data-col="${tile1.col}"]`,
+        );
+        const t2 = document.querySelector(
+          `[data-row="${tile2.row}"][data-col="${tile2.col}"]`,
+        );
+
+        if (!t1 || !t2) return;
+
+        const rect1 = t1.getBoundingClientRect();
+        const rect2 = t2.getBoundingClientRect();
+        const boardRect = boardEl.getBoundingClientRect();
+
+        const x1 = rect1.left + rect1.width / 2 - boardRect.left;
+        const y1 = rect1.top + rect1.height / 2 - boardRect.top;
+        const x2 = rect2.left + rect2.width / 2 - boardRect.left;
+        const y2 = rect2.top + rect2.height / 2 - boardRect.top;
+
+        const length = Math.sqrt((x2 - x1) ** 2 + (y2 - y1) ** 2);
+        const angle = Math.atan2(y2 - y1, x2 - x1) * 180 / Math.PI;
+
+        const line = document.createElement("div");
+        line.className = "match-line";
+        line.style.width = length + "px";
+        line.style.left = x1 + "px";
+        line.style.top = y1 + "px";
+        line.style.transform = `rotate(${angle}deg)`;
+
+        boardEl.appendChild(line);
+      }
+
+      function checkMatch() {
+        const tiles = selectedTiles.map(({ row, col }) =>
+          board[row][col]
+        );
+
+        // Check if all three tiles are from the same kana family
+        const kanaIndex = tiles[0].kanaIndex;
+        const allSameKana = tiles.every((t) =>
+          t.kanaIndex === kanaIndex
+        );
+
+        if (allSameKana) {
+          // Valid match!
+          processMatch();
+        } else {
+          // Invalid match
+          setTimeout(() => {
+            selectedTiles = [];
+            updateSelectedTiles();
+            updateFadedTiles();
+            updateNeededTypes();
+          }, 300);
+
+          showMessage("Not the same sound!");
+        }
+      }
+
+      function processMatch() {
+        isAnimating = true;
+        matches++;
+        score += 100;
+        updateStats();
+        updateProgress();
+
+        // Get tile elements
+        const tileElements = selectedTiles.map(({ row, col }) =>
+          document.querySelector(
+            `[data-row="${row}"][data-col="${col}"]`,
+          )
+        );
+
+        // Animate tiles
+        tileElements.forEach((tile) => {
+          if (tile) {
+            tile.classList.add("match-animation");
+            createParticles(tile);
+          }
+        });
+
+        // Show combo text at center
+        const centerX =
+          selectedTiles.reduce((sum, t) => sum + t.col, 0) / 3;
+        const centerY =
+          selectedTiles.reduce((sum, t) => sum + t.row, 0) / 3;
+        showCombo(centerX, centerY);
+
+        setTimeout(() => {
+          // Remove tiles from board
+          selectedTiles.forEach(({ row, col }) => {
+            board[row][col] = null;
+          });
+
+          // Clear selection
+          selectedTiles = [];
+          document.querySelectorAll(".match-line").forEach((line) =>
+            line.remove()
+          );
+          updateNeededTypes();
+
+          // Re-render board
+          renderBoard();
+
+          // Check if level complete
+          if (matches === totalMatches) {
+            setTimeout(() => {
+              showMessage("Level Complete! 🎉");
+              level++;
+              setTimeout(() => {
+                if ((level - 1) * 12 < kanaMap.length) {
+                  initGame();
+                } else {
+                  showMessage(
+                    "Congratulations! You've mastered all kana!",
+                  );
+                  level = 1;
+                  setTimeout(initGame, 2000);
+                }
+              }, 2000);
+            }, 500);
+          }
+
+          isAnimating = false;
+        }, 600);
+      }
+
+      function createParticles(tileElement) {
+        const rect = tileElement.getBoundingClientRect();
+        const boardRect = document.getElementById("gameBoard")
+          .getBoundingClientRect();
+        const x = rect.left + rect.width / 2 - boardRect.left;
+        const y = rect.top + rect.height / 2 - boardRect.top;
+
+        const emojis = ["✨", "⭐", "🌟"];
+
+        for (let i = 0; i < 6; i++) {
+          const particle = document.createElement("div");
+          particle.className = "particle";
+          particle.textContent =
+            emojis[Math.floor(Math.random() * emojis.length)];
+          particle.style.left = x + "px";
+          particle.style.top = y + "px";
+          particle.style.setProperty(
+            "--dx",
+            (Math.random() - 0.5) * 150 + "px",
+          );
+          particle.style.setProperty(
+            "--dy",
+            (Math.random() - 0.5) * 150 + "px",
+          );
+
+          document.getElementById("gameBoard").appendChild(particle);
+          setTimeout(() => particle.remove(), 1000);
+        }
+      }
+
+      function showCombo(gridX, gridY) {
+        const boardEl = document.getElementById("gameBoard");
+        const x = (gridX + 0.5) * 93 + 20; // 85px tile + 8px gap
+        const y = (gridY + 0.5) * 93 + 20;
+
+        const combo = document.createElement("div");
+        combo.className = "combo-text";
+        combo.textContent = "MATCH!";
+        combo.style.left = x + "px";
+        combo.style.top = y + "px";
+
+        boardEl.appendChild(combo);
+        setTimeout(() => combo.remove(), 1500);
+      }
+
+      function showHint() {
+        if (isAnimating) return;
+
+        // Clear current selection first
+        selectedTiles = [];
+        updateSelectedTiles();
+        updateFadedTiles();
+        updateNeededTypes();
+
+        // Find an unmatched set
+        const groups = {};
+
+        for (let row = 0; row < 6; row++) {
+          for (let col = 0; col < 6; col++) {
+            const tile = board[row][col];
+            if (!tile) continue;
+
+            if (!groups[tile.kanaIndex]) {
+              groups[tile.kanaIndex] = [];
+            }
+            groups[tile.kanaIndex].push({ row, col, type: tile.type });
+          }
+        }
+
+        // Find first complete set
+        for (let kanaIndex in groups) {
+          const tiles = groups[kanaIndex];
+          const types = {};
+
+          tiles.forEach((t) => {
+            if (!types[t.type]) types[t.type] = t;
+          });
+
+          if (types.hiragana && types.katakana && types.romaji) {
+            // Highlight these tiles
+            [types.hiragana, types.katakana, types.romaji].forEach(
+              (t) => {
+                const tile = document.querySelector(
+                  `[data-row="${t.row}"][data-col="${t.col}"]`,
+                );
+                if (tile) {
+                  tile.style.animation = "none";
+                  setTimeout(() => {
+                    tile.style.boxShadow = "0 0 30px #ffd700";
+                    tile.style.transform = "scale(1.1)";
+                  }, 10);
+                  setTimeout(() => {
+                    tile.style.boxShadow = "";
+                    tile.style.transform = "";
+                  }, 2000);
+                }
+              },
+            );
+            break;
+          }
+        }
+      }
+
+      function showMessage(text) {
+        const msg = document.getElementById("message");
+        msg.textContent = text;
+        msg.classList.add("show");
+
+        setTimeout(() => {
+          msg.classList.remove("show");
+        }, 2000);
+      }
+
+      function updateStats() {
+        document.getElementById("score").textContent = score;
+        document.getElementById("matches").textContent = matches;
+        document.getElementById("totalMatches").textContent =
+          totalMatches;
+      }
+
+      function updateProgress() {
+        const percentage = (matches / totalMatches) * 100;
+        document.getElementById("progressFill").style.width =
+          percentage + "%";
+      }
+
+      // Initialize the game
+      initGame();
+    </script>
+  </body>
+</html>
