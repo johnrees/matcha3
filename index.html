@@ -411,26 +411,41 @@
 
         // Select kana for this level
         const startIndex = (level - 1) * 12;
-        kanaPool = kanaMap.slice(startIndex, startIndex + 12);
+        let endIndex = Math.min(startIndex + 12, kanaMap.length);
+        kanaPool = kanaMap.slice(startIndex, endIndex);
+        
+        // If we don't have enough kana for a full level, reuse some from the beginning
+        if (kanaPool.length < 12) {
+          const needed = 12 - kanaPool.length;
+          const reusedKana = kanaMap.slice(0, needed);
+          kanaPool = kanaPool.concat(reusedKana);
+        }
+        
+        // Update total matches based on actual kana pool size
+        totalMatches = kanaPool.length;
+        updateStats();
 
         // Create tiles for the board
         const tiles = [];
         kanaPool.forEach((kana, index) => {
+          // Find the original index of this kana in kanaMap
+          const originalIndex = kanaMap.findIndex(k => k.hiragana === kana.hiragana);
+          
           tiles.push({
             kana,
-            kanaIndex: index,
+            kanaIndex: originalIndex,
             type: "hiragana",
             display: kana.hiragana,
           });
           tiles.push({
             kana,
-            kanaIndex: index,
+            kanaIndex: originalIndex,
             type: "katakana",
             display: kana.katakana,
           });
           tiles.push({
             kana,
-            kanaIndex: index,
+            kanaIndex: originalIndex,
             type: "romaji",
             display: kana.romaji,
           });
