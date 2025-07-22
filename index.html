@@ -2,7 +2,10 @@
 <html lang="en">
   <head>
     <meta charset="UTF-8" />
-    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no" />
+    <meta
+      name="viewport"
+      content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no"
+    />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="mobile-web-app-capable" content="yes" />
     <title>Matcha3!</title>
@@ -204,7 +207,8 @@
       }
 
       @keyframes errorPulse {
-        0%, 100% {
+        0%,
+        100% {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
         }
         50% {
@@ -538,14 +542,15 @@
         }
 
         /* Ensure full height on mobile */
-        html, body {
+        html,
+        body {
           height: 100%;
           min-height: 100vh;
           overflow: hidden;
           position: fixed;
           width: 100%;
         }
-        
+
         /* Ensure gradient background is applied */
         body {
           background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
@@ -643,6 +648,32 @@
         { hiragana: "つ", katakana: "ツ", romaji: "tsu" },
         { hiragana: "て", katakana: "テ", romaji: "te" },
         { hiragana: "と", katakana: "ト", romaji: "to" },
+        { hiragana: "な", katakana: "ナ", romaji: "na" },
+        { hiragana: "に", katakana: "ニ", romaji: "ni" },
+        { hiragana: "ぬ", katakana: "ヌ", romaji: "nu" },
+        { hiragana: "ね", katakana: "ネ", romaji: "ne" },
+        { hiragana: "の", katakana: "ノ", romaji: "no" },
+        { hiragana: "は", katakana: "ハ", romaji: "ha" },
+        { hiragana: "ひ", katakana: "ヒ", romaji: "hi" },
+        { hiragana: "ふ", katakana: "フ", romaji: "fu" },
+        { hiragana: "へ", katakana: "ヘ", romaji: "he" },
+        { hiragana: "ほ", katakana: "ホ", romaji: "ho" },
+        { hiragana: "ま", katakana: "マ", romaji: "ma" },
+        { hiragana: "み", katakana: "ミ", romaji: "mi" },
+        { hiragana: "む", katakana: "ム", romaji: "mu" },
+        { hiragana: "め", katakana: "メ", romaji: "me" },
+        { hiragana: "も", katakana: "モ", romaji: "mo" },
+        { hiragana: "や", katakana: "ヤ", romaji: "ya" },
+        { hiragana: "ゆ", katakana: "ユ", romaji: "yu" },
+        { hiragana: "よ", katakana: "ヨ", romaji: "yo" },
+        { hiragana: "ら", katakana: "ラ", romaji: "ra" },
+        { hiragana: "り", katakana: "リ", romaji: "ri" },
+        { hiragana: "る", katakana: "ル", romaji: "ru" },
+        { hiragana: "れ", katakana: "レ", romaji: "re" },
+        { hiragana: "ろ", katakana: "ロ", romaji: "ro" },
+        { hiragana: "わ", katakana: "ワ", romaji: "wa" },
+        { hiragana: "を", katakana: "ヲ", romaji: "wo" },
+        { hiragana: "ん", katakana: "ン", romaji: "n" },
       ];
 
       let board = [];
@@ -677,7 +708,7 @@
         updateProgress();
         updateNeededTypes();
         updateTimer();
-        
+
         // Disable New Game button until timer starts
         const newGameBtn = document.getElementById("newGameBtn");
         if (newGameBtn) {
@@ -697,14 +728,19 @@
           for (let i = 0; i < startIndex; i++) {
             availableIndices.push(i);
           }
-          
+
           // Shuffle available indices and take what we need
           for (let i = availableIndices.length - 1; i > 0; i--) {
             const j = Math.floor(Math.random() * (i + 1));
-            [availableIndices[i], availableIndices[j]] = [availableIndices[j], availableIndices[i]];
+            [availableIndices[i], availableIndices[j]] = [
+              availableIndices[j],
+              availableIndices[i],
+            ];
           }
-          
-          const reusedKana = availableIndices.slice(0, needed).map(i => kanaMap[i]);
+
+          const reusedKana = availableIndices
+            .slice(0, needed)
+            .map((i) => kanaMap[i]);
           kanaPool = kanaPool.concat(reusedKana);
         }
 
@@ -779,10 +815,14 @@
                 e.preventDefault();
                 handleTileClick(row, col);
               });
-              tileElement.addEventListener("touchstart", (e) => {
-                e.preventDefault();
-                handleTileClick(row, col);
-              }, { passive: false });
+              tileElement.addEventListener(
+                "touchstart",
+                (e) => {
+                  e.preventDefault();
+                  handleTileClick(row, col);
+                },
+                { passive: false },
+              );
             }
 
             gameBoard.appendChild(tileElement);
@@ -793,13 +833,14 @@
       }
 
       function handleTileClick(row, col) {
-        if (isAnimating || !board[row][col] || isGameOver || isAutoMatching) return;
+        if (isAnimating || !board[row][col] || isGameOver || isAutoMatching)
+          return;
 
         // Start timer on first interaction
         if (!hasStarted) {
           hasStarted = true;
           startTimer();
-          
+
           // Enable New Game button now that game has started
           const newGameBtn = document.getElementById("newGameBtn");
           if (newGameBtn) {
@@ -1007,7 +1048,7 @@
           document.querySelectorAll(".tile.shake").forEach((tile) => {
             tile.classList.remove("shake");
           });
-          
+
           // Remove error pulse
           document.body.classList.remove("error-pulse");
 
@@ -1089,13 +1130,13 @@
               showMessage("Level Complete! 🎉");
               level++;
               setTimeout(() => {
-                if ((level - 1) * 12 < kanaMap.length) {
+                if (level * 12 < kanaMap.length) {
                   // Continue to next level with fresh timer
                   const savedHasStarted = hasStarted;
                   initGame();
                   hasStarted = savedHasStarted;
                   // Timer will be reset to 30 in initGame
-                  
+
                   // Keep New Game button enabled between levels
                   const newGameBtn = document.getElementById("newGameBtn");
                   if (newGameBtn && hasStarted) {
@@ -1112,7 +1153,7 @@
 
           isAnimating = false;
           isAutoMatching = false;
-          
+
           // Resume timer if it's not running and game isn't over
           if (!timerInterval && !isGameOver && hasStarted) {
             startTimer();
@@ -1377,19 +1418,27 @@
       initGame();
 
       // Prevent pull-to-refresh and overscroll on mobile
-      document.addEventListener('touchmove', function(e) {
-        e.preventDefault();
-      }, { passive: false });
+      document.addEventListener(
+        "touchmove",
+        function (e) {
+          e.preventDefault();
+        },
+        { passive: false },
+      );
 
       // Prevent double-tap zoom
       let lastTouchEnd = 0;
-      document.addEventListener('touchend', function(e) {
-        const now = Date.now();
-        if (now - lastTouchEnd <= 300) {
-          e.preventDefault();
-        }
-        lastTouchEnd = now;
-      }, false);
+      document.addEventListener(
+        "touchend",
+        function (e) {
+          const now = Date.now();
+          if (now - lastTouchEnd <= 300) {
+            e.preventDefault();
+          }
+          lastTouchEnd = now;
+        },
+        false,
+      );
     </script>
   </body>
 </html>
