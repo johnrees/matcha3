@@ -13,6 +13,11 @@
         box-sizing: border-box;
       }
 
+      html {
+        height: 100%;
+        background: #667eea;
+      }
+
       body {
         margin: 0;
         padding: 0;
@@ -21,6 +26,7 @@
           -apple-system,
           sans-serif;
         background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+        background-attachment: fixed;
         display: flex;
         justify-content: center;
         align-items: center;
@@ -521,9 +527,16 @@
         /* Ensure full height on mobile */
         html, body {
           height: 100%;
+          min-height: 100vh;
           overflow: hidden;
           position: fixed;
           width: 100%;
+        }
+        
+        /* Ensure gradient background is applied */
+        body {
+          background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+          background-attachment: fixed;
         }
       }
 
