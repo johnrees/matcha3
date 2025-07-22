@@ -39,6 +39,9 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
    - 5-second bonus for each successful match (capped at 30 seconds)
    - Visual warning when under 10 seconds
    - Timer resets to 30 seconds when advancing to new level
+9. **Game Controls**:
+   - New Game button disabled until first tile selection
+   - Prevents accidental restarts before gameplay begins
 
 ## Technical Implementation
 
@@ -140,6 +143,10 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
    - Touch-optimized with larger buttons
    - Prevents pull-to-refresh and double-tap zoom
    - Fixed gradient background issue on iOS
+8. **Game Control Improvements**:
+   - New Game button disabled until first tile selection
+   - Prevents accidental game restarts before starting
+   - Button automatically enables after first interaction
 
 ### Visual Enhancements
 

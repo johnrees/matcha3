@@ -600,7 +600,7 @@
         <div class="timer-fill" id="timerFill"></div>
       </div>
       <div>
-        <button onclick="initGame()">New Game</button>
+        <button onclick="initGame()" id="newGameBtn">New Game</button>
         <button onclick="showHint()" id="hintBtn">Show Hint</button>
       </div>
       <div class="legend">
@@ -677,6 +677,12 @@
         updateProgress();
         updateNeededTypes();
         updateTimer();
+        
+        // Disable New Game button until timer starts
+        const newGameBtn = document.getElementById("newGameBtn");
+        if (newGameBtn) {
+          newGameBtn.disabled = true;
+        }
 
         // Select kana for this level
         const startIndex = (level - 1) * 12;
@@ -793,6 +799,12 @@
         if (!hasStarted) {
           hasStarted = true;
           startTimer();
+          
+          // Enable New Game button now that game has started
+          const newGameBtn = document.getElementById("newGameBtn");
+          if (newGameBtn) {
+            newGameBtn.disabled = false;
+          }
         }
 
         const clickedTile = { row, col };
@@ -1083,6 +1095,12 @@
                   initGame();
                   hasStarted = savedHasStarted;
                   // Timer will be reset to 30 in initGame
+                  
+                  // Keep New Game button enabled between levels
+                  const newGameBtn = document.getElementById("newGameBtn");
+                  if (newGameBtn && hasStarted) {
+                    newGameBtn.disabled = false;
+                  }
                 } else {
                   showMessage("Congratulations! You've mastered all kana!");
                   level = 1;
