@@ -1062,6 +1062,11 @@
           }
 
           isAnimating = false;
+          
+          // Resume timer if it's not running and game isn't over
+          if (!timerInterval && !isGameOver && hasStarted) {
+            startTimer();
+          }
         }, 600);
       }
 
@@ -1139,6 +1144,11 @@
       function performAutoMatch(tiles) {
         isAnimating = true;
 
+        // Pause the timer during auto-match
+        if (timerInterval) {
+          clearInterval(timerInterval);
+        }
+
         // Sort tiles to ensure consistent order: hiragana, katakana, romaji
         const typeOrder = { hiragana: 0, katakana: 1, romaji: 2 };
         tiles.sort((a, b) => typeOrder[a.tile.type] - typeOrder[b.tile.type]);
@@ -1155,6 +1165,7 @@
             if (index === 2) {
               setTimeout(() => {
                 checkMatch();
+                // Resume timer after match is processed (will happen in processMatch)
               }, 400);
             }
           }, index * 250); // 250ms delay between each selection
