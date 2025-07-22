@@ -63,11 +63,26 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 ```javascript
 {
     kana: { hiragana: 'あ', katakana: 'ア', romaji: 'a' },
-    kanaIndex: 0,  // Index in the kana pool
+    kanaIndex: 0,  // Index in the kanaMap array
     type: 'hiragana',  // 'hiragana', 'katakana', or 'romaji'
     display: 'あ'  // The character to display
 }
 ```
+
+### Kana Character Set
+
+The game includes all 46 basic kana:
+- **Vowels**: あいうえお (a, i, u, e, o)
+- **K-row**: かきくけこ (ka, ki, ku, ke, ko)
+- **S-row**: さしすせそ (sa, shi, su, se, so)
+- **T-row**: たちつてと (ta, chi, tsu, te, to)
+- **N-row**: なにぬねの (na, ni, nu, ne, no)
+- **H-row**: はひふへほ (ha, hi, fu, he, ho)
+- **M-row**: まみむめも (ma, mi, mu, me, mo)
+- **Y-row**: やゆよ (ya, yu, yo)
+- **R-row**: らりるれろ (ra, ri, ru, re, ro)
+- **W-row**: わを (wa, wo)
+- **N**: ん (n)
 
 ### Key Functions
 
@@ -92,13 +107,13 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 
 ### Progression System
 
-- Starts with 12 kana families per level
-- Each level introduces new characters
-- Total of 20 basic kana implemented
-- Level 2 uses remaining 8 kana plus 4 randomly selected from previous kana
-- After completing all kana, game cycles back to level 1
+- Each level presents 12 randomly selected kana from the full set
+- Total of 46 basic kana implemented (complete hiragana/katakana chart)
+- Random selection ensures different characters each game
+- Infinite progression - game continues with new random selections
 - Timer resets to 30 seconds when advancing levels
 - Tiles are shuffled using Fisher-Yates algorithm for random board layouts
+- No memorizable patterns - true character recognition required
 
 ## Future Enhancements
 
@@ -147,6 +162,14 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
    - New Game button disabled until first tile selection
    - Prevents accidental game restarts before starting
    - Button automatically enables after first interaction
+9. **Complete Kana Set**:
+   - Added all 46 basic hiragana/katakana characters
+   - Includes all vowels, consonants, and special characters (ん, を)
+   - Excludes dakuten and combination kana for simplicity
+10. **Random Level Generation**:
+   - Each level randomly selects 12 kana from the full set
+   - No sequential progression - every game is unique
+   - Better learning through unpredictable character selection
 
 ### Visual Enhancements
 

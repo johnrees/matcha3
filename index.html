@@ -715,34 +715,18 @@
           newGameBtn.disabled = true;
         }
 
-        // Select kana for this level
-        const startIndex = (level - 1) * 12;
-        let endIndex = Math.min(startIndex + 12, kanaMap.length);
-        kanaPool = kanaMap.slice(startIndex, endIndex);
-
-        // If we don't have enough kana for a full level, reuse some randomly
-        if (kanaPool.length < 12) {
-          const needed = 12 - kanaPool.length;
-          // Get indices of kana not in current pool
-          const availableIndices = [];
-          for (let i = 0; i < startIndex; i++) {
-            availableIndices.push(i);
-          }
-
-          // Shuffle available indices and take what we need
-          for (let i = availableIndices.length - 1; i > 0; i--) {
-            const j = Math.floor(Math.random() * (i + 1));
-            [availableIndices[i], availableIndices[j]] = [
-              availableIndices[j],
-              availableIndices[i],
-            ];
-          }
-
-          const reusedKana = availableIndices
-            .slice(0, needed)
-            .map((i) => kanaMap[i]);
-          kanaPool = kanaPool.concat(reusedKana);
+        // Select random kana for this level
+        // Create array of all indices
+        const allIndices = Array.from({length: kanaMap.length}, (_, i) => i);
+        
+        // Shuffle all indices
+        for (let i = allIndices.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [allIndices[i], allIndices[j]] = [allIndices[j], allIndices[i]];
         }
+        
+        // Take 12 random kana
+        kanaPool = allIndices.slice(0, 12).map(i => kanaMap[i]);
 
         // Update total matches based on actual kana pool size
         totalMatches = kanaPool.length;
@@ -1130,22 +1114,16 @@
               showMessage("Level Complete! 🎉");
               level++;
               setTimeout(() => {
-                if (level * 12 < kanaMap.length) {
-                  // Continue to next level with fresh timer
-                  const savedHasStarted = hasStarted;
-                  initGame();
-                  hasStarted = savedHasStarted;
-                  // Timer will be reset to 30 in initGame
+                // Always continue to next level with random kana
+                const savedHasStarted = hasStarted;
+                initGame();
+                hasStarted = savedHasStarted;
+                // Timer will be reset to 30 in initGame
 
-                  // Keep New Game button enabled between levels
-                  const newGameBtn = document.getElementById("newGameBtn");
-                  if (newGameBtn && hasStarted) {
-                    newGameBtn.disabled = false;
-                  }
-                } else {
-                  showMessage("Congratulations! You've mastered all kana!");
-                  level = 1;
-                  setTimeout(initGame, 2000);
+                // Keep New Game button enabled between levels
+                const newGameBtn = document.getElementById("newGameBtn");
+                if (newGameBtn && hasStarted) {
+                  newGameBtn.disabled = false;
                 }
               }, 2000);
             }, 500);
