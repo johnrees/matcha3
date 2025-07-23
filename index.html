@@ -71,9 +71,9 @@
         color: #ffd700;
       }
 
-      .stat.timer.warning span {
+      .stat.timer.penalty span {
         color: #ff6b6b;
-        animation: pulse 1s ease-in-out infinite;
+        animation: pulse 0.5s ease;
       }
 
       @keyframes pulse {
@@ -392,31 +392,6 @@
         border-radius: 3px;
       }
 
-      .timer-bar {
-        margin: 5px auto 15px;
-        width: 580px; /* Same as game board */
-        height: 6px;
-        background: rgba(0, 0, 0, 0.3);
-        border-radius: 3px;
-        overflow: hidden;
-        position: relative;
-      }
-
-      .timer-fill {
-        height: 100%;
-        background: linear-gradient(90deg, #4ade80, #22c55e);
-        width: 100%;
-        transition: width 1s linear;
-        border-radius: 3px;
-      }
-
-      .timer-fill.warning {
-        background: linear-gradient(90deg, #ff6b6b, #dc2626);
-      }
-
-      .timer-fill.bonus {
-        transition: width 0.3s ease-out;
-      }
 
       .needed-types {
         margin: 10px 0;
@@ -485,12 +460,11 @@
           border-width: 2px;
         }
 
-        .progress-bar,
-        .timer-bar {
+        .progress-bar {
           width: calc(100vw - 20px);
           max-width: 420px;
           height: 5px;
-          margin: 5px auto;
+          margin: 5px auto 15px;
         }
 
         button {
@@ -594,16 +568,14 @@
           Matches: <span id="matches">0</span> /
           <span id="totalMatches">12</span>
         </div>
-        <div class="stat timer">Time: <span id="timer">30</span>s</div>
+        <div class="stat timer">Time: <span id="timer">0</span>s</div>
       </div>
       <div class="needed-types" id="neededTypes"></div>
       <div class="game-board" id="gameBoard"></div>
       <div class="progress-bar">
         <div class="progress-fill" id="progressFill"></div>
       </div>
-      <div class="timer-bar">
-        <div class="timer-fill" id="timerFill"></div>
-      </div>
+      <div id="charStatsDebug" style="display: none; color: white; margin-top: 20px; font-size: 0.9em;"></div>
       <div>
         <button onclick="initGame()" id="newGameBtn">New Game</button>
         <button onclick="showHint()" id="hintBtn">Show Hint</button>
@@ -684,11 +656,13 @@
       let isAnimating = false;
       let kanaPool = [];
       let level = 1;
-      let timeRemaining = 30;
+      let timeElapsed = 0;
       let timerInterval = null;
       let isGameOver = false;
       let hasStarted = false;
       let isAutoMatching = false;
+      let currentMatchStartTime = 0;
+      let characterStats = {};
 
       function initGame() {
         board = [];
@@ -697,7 +671,8 @@
         matches = 0;
         isGameOver = false;
         hasStarted = false;
-        timeRemaining = 30;
+        timeElapsed = 0;
+        currentMatchStartTime = 0;
 
         // Clear any existing timer
         if (timerInterval) {
@@ -824,6 +799,7 @@
         if (!hasStarted) {
           hasStarted = true;
           startTimer();
+          currentMatchStartTime = Date.now();
 
           // Enable New Game button now that game has started
           const newGameBtn = document.getElementById("newGameBtn");
@@ -1013,6 +989,26 @@
       function handleMismatch() {
         isAnimating = true;
 
+        // Add 3-second penalty
+        addPenalty(3);
+
+        // Track incorrect attempts for these characters
+        const tiles = selectedTiles.map(({ row, col }) => board[row][col]);
+        tiles.forEach(tile => {
+          if (tile) {
+            const kanaIndex = tile.kanaIndex;
+            if (!characterStats[kanaIndex]) {
+              characterStats[kanaIndex] = {
+                attempts: 0,
+                incorrect: 0,
+                totalTime: 0,
+                avgTime: 0
+              };
+            }
+            characterStats[kanaIndex].incorrect++;
+          }
+        });
+
         // Add red pulse to background
         document.body.classList.add("error-pulse");
 
@@ -1063,13 +1059,31 @@
 
       function processMatch() {
         isAnimating = true;
+        
+        // Track response time for this match
+        const responseTime = Date.now() - currentMatchStartTime;
+        const tiles = selectedTiles.map(({ row, col }) => board[row][col]);
+        const kanaIndex = tiles[0].kanaIndex;
+        
+        if (!characterStats[kanaIndex]) {
+          characterStats[kanaIndex] = {
+            attempts: 0,
+            incorrect: 0,
+            totalTime: 0,
+            avgTime: 0
+          };
+        }
+        
+        characterStats[kanaIndex].attempts++;
+        characterStats[kanaIndex].totalTime += responseTime;
+        characterStats[kanaIndex].avgTime = Math.round(
+          characterStats[kanaIndex].totalTime / characterStats[kanaIndex].attempts
+        );
+        
         matches++;
         score += 100;
         updateStats();
         updateProgress();
-
-        // Add bonus time for successful match
-        addBonusTime(5);
 
         // Get tile elements
         const tileElements = selectedTiles.map(({ row, col }) =>
@@ -1104,6 +1118,9 @@
 
           // Re-render board
           renderBoard();
+          
+          // Reset match start time for next match
+          currentMatchStartTime = Date.now();
 
           // Check for auto-match condition (only 3 tiles left)
           checkAutoMatch();
@@ -1111,31 +1128,12 @@
           // Check if level complete
           if (matches === totalMatches) {
             setTimeout(() => {
-              showMessage("Level Complete! 🎉");
-              level++;
-              setTimeout(() => {
-                // Always continue to next level with random kana
-                const savedHasStarted = hasStarted;
-                initGame();
-                hasStarted = savedHasStarted;
-                // Timer will be reset to 30 in initGame
-
-                // Keep New Game button enabled between levels
-                const newGameBtn = document.getElementById("newGameBtn");
-                if (newGameBtn && hasStarted) {
-                  newGameBtn.disabled = false;
-                }
-              }, 2000);
+              gameOver();
             }, 500);
           }
 
           isAnimating = false;
           isAutoMatching = false;
-
-          // Resume timer if it's not running and game isn't over
-          if (!timerInterval && !isGameOver && hasStarted) {
-            startTimer();
-          }
         }, 600);
       }
 
@@ -1214,10 +1212,9 @@
         isAnimating = true;
         isAutoMatching = true;
 
-        // Pause the timer during auto-match
-        if (timerInterval) {
-          clearInterval(timerInterval);
-        }
+        // Don't pause timer during auto-match in stopwatch mode
+        // Just mark that we're auto-matching
+        isAutoMatching = true;
 
         // Sort tiles to ensure consistent order: hiragana, katakana, romaji
         const typeOrder = { hiragana: 0, katakana: 1, romaji: 2 };
@@ -1323,53 +1320,35 @@
         timerInterval = setInterval(() => {
           if (isGameOver) return;
 
-          timeRemaining--;
+          timeElapsed++;
           updateTimer();
-
-          if (timeRemaining <= 0) {
-            gameOver();
-          }
         }, 1000);
       }
 
       function updateTimer() {
         const timerEl = document.getElementById("timer");
-        const timerStatEl = document.querySelector(".stat.timer");
-        const timerFill = document.getElementById("timerFill");
-
-        timerEl.textContent = timeRemaining;
-
-        // Update timer bar width
-        const percentage = (timeRemaining / 30) * 100;
-        timerFill.style.width = percentage + "%";
-
-        // Add warning class when time is low
-        if (timeRemaining <= 10) {
-          timerStatEl.classList.add("warning");
-          timerFill.classList.add("warning");
-        } else {
-          timerStatEl.classList.remove("warning");
-          timerFill.classList.remove("warning");
-        }
+        timerEl.textContent = timeElapsed;
       }
 
-      function addBonusTime(seconds) {
-        const timerFill = document.getElementById("timerFill");
+      function addPenalty(seconds) {
+        const timerStatEl = document.querySelector(".stat.timer");
 
-        // Add bonus class for smooth animation
-        timerFill.classList.add("bonus");
-
-        timeRemaining = Math.min(timeRemaining + seconds, 30);
+        // Add penalty time
+        timeElapsed += seconds;
         updateTimer();
 
-        // Visual feedback for bonus time
+        // Visual feedback for penalty
+        timerStatEl.classList.add("penalty");
+
+        // Show penalty text
         const timerEl = document.getElementById("timer");
-        timerEl.style.color = "#4ade80";
+        const originalContent = timerEl.innerHTML;
+        timerEl.innerHTML = timeElapsed + ' <span style="color:#ff6b6b">+3</span>';
 
         setTimeout(() => {
-          timerEl.style.color = "";
-          timerFill.classList.remove("bonus");
-        }, 500);
+          timerStatEl.classList.remove("penalty");
+          timerEl.innerHTML = timeElapsed;
+        }, 1000);
       }
 
       function gameOver() {
@@ -1382,18 +1361,96 @@
           tile.style.opacity = "0.5";
         });
 
-        showMessage("Time's Up! Game Over");
+        showMessage("Level Complete!");
 
+        // Show character statistics
         setTimeout(() => {
-          if (confirm("Game Over! Your score: " + score + "\nPlay again?")) {
-            level = 1;
-            initGame();
-          }
+          showCharacterStats();
         }, 2000);
+      }
+
+      function showCharacterStats() {
+        let statsMessage = "Character Performance:\n\n";
+        
+        // Sort characters by difficulty (incorrect attempts + avg time)
+        const sortedStats = Object.entries(characterStats)
+          .filter(([_, stats]) => stats.attempts > 0)
+          .sort((a, b) => {
+            const difficultyA = a[1].incorrect + (a[1].avgTime / 1000);
+            const difficultyB = b[1].incorrect + (b[1].avgTime / 1000);
+            return difficultyB - difficultyA;
+          })
+          .slice(0, 5); // Show top 5 most difficult
+        
+        if (sortedStats.length > 0) {
+          statsMessage += "Most Challenging Characters:\n";
+          sortedStats.forEach(([kanaIndex, stats]) => {
+            const kana = kanaMap[kanaIndex];
+            const accuracy = Math.round(((stats.attempts - stats.incorrect) / stats.attempts) * 100);
+            statsMessage += `${kana.hiragana}/${kana.katakana}/${kana.romaji}: `;
+            statsMessage += `${stats.avgTime / 1000}s avg, ${accuracy}% accuracy\n`;
+          });
+        }
+        
+        statsMessage += `\nTotal time: ${timeElapsed}s\nScore: ${score}`;
+        statsMessage += "\n\nPlay again?";
+        
+        if (confirm(statsMessage)) {
+          level = 1;
+          initGame();
+        }
       }
 
       // Initialize the game
       initGame();
+      
+      // Debug: Press 'd' to toggle character stats display
+      document.addEventListener('keydown', (e) => {
+        if (e.key === 'd') {
+          const debugEl = document.getElementById('charStatsDebug');
+          if (debugEl.style.display === 'none') {
+            debugEl.style.display = 'block';
+            updateDebugStats();
+          } else {
+            debugEl.style.display = 'none';
+          }
+        }
+      });
+      
+      function updateDebugStats() {
+        const debugEl = document.getElementById('charStatsDebug');
+        if (!debugEl || debugEl.style.display === 'none') return;
+        
+        let html = '<h3>Character Statistics</h3>';
+        const sortedStats = Object.entries(characterStats)
+          .filter(([_, stats]) => stats.attempts > 0)
+          .sort((a, b) => b[1].avgTime - a[1].avgTime);
+        
+        if (sortedStats.length === 0) {
+          html += '<p>No data yet - start matching!</p>';
+        } else {
+          html += '<table style="width:100%; text-align:left;">';
+          html += '<tr><th>Character</th><th>Avg Time</th><th>Attempts</th><th>Errors</th><th>Accuracy</th></tr>';
+          
+          sortedStats.forEach(([kanaIndex, stats]) => {
+            const kana = kanaMap[kanaIndex];
+            const accuracy = Math.round(((stats.attempts - stats.incorrect) / stats.attempts) * 100);
+            html += '<tr>';
+            html += `<td>${kana.hiragana}/${kana.katakana}/${kana.romaji}</td>`;
+            html += `<td>${(stats.avgTime / 1000).toFixed(1)}s</td>`;
+            html += `<td>${stats.attempts}</td>`;
+            html += `<td>${stats.incorrect}</td>`;
+            html += `<td>${accuracy}%</td>`;
+            html += '</tr>';
+          });
+          html += '</table>';
+        }
+        
+        debugEl.innerHTML = html;
+      }
+      
+      // Update debug stats periodically if visible
+      setInterval(updateDebugStats, 1000);
 
       // Prevent pull-to-refresh and overscroll on mobile
       document.addEventListener(
