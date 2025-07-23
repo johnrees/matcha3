@@ -377,6 +377,74 @@
           opacity: 0;
         }
       }
+      
+      .spirit-text {
+        position: absolute;
+        pointer-events: none;
+        font-size: 1.8em;
+        font-weight: 700;
+        z-index: 60;
+        text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.3);
+        padding: 4px 8px;
+        border-radius: 6px;
+        border: 2px solid;
+      }
+      
+      .spirit-text.hiragana {
+        background: #ffb6c1;
+        border-color: #ff69b4;
+        color: #333;
+      }
+      
+      .spirit-text.katakana {
+        background: #87ceeb;
+        border-color: #4682b4;
+        color: #333;
+      }
+      
+      .spirit-text.romaji {
+        background: #90ee90;
+        border-color: #32cd32;
+        color: #333;
+      }
+      
+      .spirit-text.float-up {
+        animation: floatUp 1.5s ease-out forwards;
+      }
+      
+      .spirit-text.float-down {
+        animation: floatDown 1.5s ease-out forwards;
+      }
+      
+      @keyframes floatUp {
+        0% {
+          transform: translate(-50%, -50%) scale(0.8);
+          opacity: 0;
+        }
+        20% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, -200%) scale(0.9);
+          opacity: 0;
+        }
+      }
+      
+      @keyframes floatDown {
+        0% {
+          transform: translate(-50%, -50%) scale(0.8);
+          opacity: 0;
+        }
+        20% {
+          transform: translate(-50%, -50%) scale(1);
+          opacity: 1;
+        }
+        100% {
+          transform: translate(-50%, 100%) scale(0.9);
+          opacity: 0;
+        }
+      }
 
       .progress-bar {
         margin: 10px auto 5px;
@@ -1070,6 +1138,8 @@
           );
           if (tile) {
             tile.classList.add("shake");
+            // Show other writing systems for educational feedback
+            showOtherWritingSystems(tile, board[row][col]);
           }
         });
 
@@ -1494,6 +1564,43 @@
       
       // Update debug stats periodically if visible
       setInterval(updateDebugStats, 1000);
+      
+      function showOtherWritingSystems(tileElement, tileData) {
+        const kana = tileData.kana;
+        const originalType = tileData.type;
+        const rect = tileElement.getBoundingClientRect();
+        const boardRect = document.getElementById('gameBoard').getBoundingClientRect();
+        
+        // Get the other two writing systems
+        const otherTypes = [];
+        if (originalType !== 'hiragana') {
+          otherTypes.push({ display: kana.hiragana, type: 'hiragana', direction: 'up' });
+        }
+        if (originalType !== 'katakana') {
+          otherTypes.push({ display: kana.katakana, type: 'katakana', direction: otherTypes.length === 0 ? 'up' : 'down' });
+        }
+        if (originalType !== 'romaji') {
+          otherTypes.push({ display: kana.romaji, type: 'romaji', direction: otherTypes.length === 0 ? 'up' : 'down' });
+        }
+        
+        // Create floating spirit elements
+        otherTypes.forEach((item, index) => {
+          const spirit = document.createElement('div');
+          spirit.className = `spirit-text ${item.type} float-${item.direction}`;
+          spirit.textContent = item.display;
+          
+          // Position at the center of the tile
+          const x = rect.left + rect.width / 2 - boardRect.left;
+          const y = rect.top + rect.height / 2 - boardRect.top;
+          spirit.style.left = x + 'px';
+          spirit.style.top = y + 'px';
+          
+          document.getElementById('gameBoard').appendChild(spirit);
+          
+          // Remove after animation
+          setTimeout(() => spirit.remove(), 1500);
+        });
+      }
       
       function addNewTiles() {
         // Find empty positions

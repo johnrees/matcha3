@@ -35,6 +35,7 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 6. **Smart Mismatch Handling**: 
    - When second tile doesn't match first: only second tile shakes and is deselected, first remains selected
    - When third tile doesn't match first two: only third tile shakes and is deselected, first two remain selected and connected
+   - Incorrect tiles show educational feedback with floating spirit animation
 7. **Auto-Match**: Final 3 tiles automatically match with visual sequence
    - User input disabled during auto-match
 8. **Timer System**:
@@ -104,6 +105,7 @@ The game includes all 46 basic kana:
 - `checkMatch()`: Validates if selected tiles form a valid match
 - `processMatch()`: Handles match animation, tile removal, and character stats tracking
 - `handleMismatch(keepTiles)`: Shows shake animation for incorrect matches, keeping specified number of tiles selected
+- `showOtherWritingSystems()`: Creates floating spirit animations showing alternative character forms
 - `checkAutoMatch()`: Detects and processes final 3 tiles automatically
 - `updateTimer()`: Updates timer display with minute formatting
 - `canCharacterMatch()`: Checks if a character has all 3 types on board
@@ -159,6 +161,7 @@ The game includes all 46 basic kana:
    - Incorrect second tile: shakes and deselects only the second tile, keeping first selected
    - Incorrect third tile: shakes and deselects only the third tile, keeping first two selected
    - Red background pulse on any mismatch
+   - Educational feedback: other writing systems float out like spirits
 2. **Enhanced Fade Effect**: Unavailable tiles now fade to 15% opacity with grayscale filter
 3. **Auto-Match System**: Final 3 tiles automatically match with staggered selection animation
    - Timer pauses during animation to prevent unfair game over
@@ -196,6 +199,7 @@ The game includes all 46 basic kana:
 ### Visual Enhancements
 
 - Shake animation for incorrect matches with red background pulse
+- Spirit animation: other writing systems float up/down from incorrect tiles
 - No text message for mismatches - visual feedback only
 - Progress bar matches game grid width
 - Unavailable tiles shown in grey with reduced opacity
@@ -241,6 +245,7 @@ The game includes all 46 basic kana:
 - Large, readable fonts
 - Clear visual feedback for all actions
 - Touch targets meet minimum size requirements
+- Educational animations help with character learning
 - Could add keyboard navigation support
 
 ## File Structure
@@ -265,6 +270,27 @@ characterStats[kanaIndex] = {
 
 This data will be used for implementing a spaced repetition system (SRS) in the future, where characters with slower response times or more errors will appear more frequently.
 
+### Visual Feedback System
+
+#### Spirit Animation for Incorrect Matches
+When a player selects an incorrect tile, the game provides educational feedback by showing the other two writing systems:
+
+1. **Animation Details**:
+   - Two spirit-like text elements emerge from the incorrect tile
+   - One floats upward, the other downward
+   - Each shows one of the other writing systems for that character
+   - Duration: 1.5 seconds with fade-out effect
+
+2. **Styling**:
+   - Each floating text maintains its script's color scheme
+   - Includes borders and shadows for visibility
+   - Non-interactive (pointer-events: none)
+
+3. **Educational Value**:
+   - Immediately shows all three forms of the character
+   - Helps players understand why their selection was wrong
+   - Reinforces character relationships through visual association
+
 ## Other Ideas
 
 - you can ignore everything in other_ideas unless otherwise instructed
@@ -280,3 +306,8 @@ This data will be used for implementing a spaced repetition system (SRS) in the 
 5. **Improved Selection UX**: When making incorrect matches, correctly selected tiles remain selected
 6. **Timer Format**: Time display now formats as "XmYs" after 60 seconds (e.g., "1m23s")
 7. **Removed Penalties**: No more 3-second penalties for incorrect matches - pure performance tracking
+8. **Educational Spirit Animation**: When making incorrect matches, the other two writing systems float out from the tile:
+   - One floats upward, one floats downward
+   - Each maintains its proper color coding (pink/blue/green)
+   - Smooth fade-out animation over 1.5 seconds
+   - Helps players learn character relationships visually
