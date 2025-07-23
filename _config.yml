@@ -1,0 +1,4 @@
+exclude:
+  - other_ideas/
+  - CLAUDE.md
+  - README.md
