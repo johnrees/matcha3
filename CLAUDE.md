@@ -14,7 +14,7 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
   - Are from different writing systems (one hiragana, one katakana, one romaji)
 - **Visual Feedback**: When a tile is selected, all other tiles of the same type fade to 15% opacity with grayscale effect
 - **Completion**: Matched tiles disappear with animation, leaving empty spaces on the board
-- **Time Pressure**: 30-second countdown timer with 5-second bonus per match
+- **Timing System**: Stopwatch counts up from 0 seconds with 3-second penalty for incorrect matches
 
 ### Visual Design
 
@@ -27,18 +27,17 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 
 1. **Smart Selection System**: Prevents selecting multiple tiles of the same type
 2. **Visual Guidance**: Faded tiles (15% opacity + grayscale) indicate which types cannot be selected
-3. **Progress Tracking**: Dual progress bars showing level completion and time remaining
+3. **Progress Tracking**: Progress bar showing level completion
 4. **Hint System**: Highlights a valid match set when clicked
 5. **Dynamic Instructions**: Text updates to show which tile types are still needed
 6. **Early Mismatch Detection**: Tiles shake when second selection doesn't match the first
 7. **Auto-Match**: Final 3 tiles automatically match with visual sequence
-   - Timer pauses during auto-match animation
    - User input disabled during auto-match
 8. **Timer System**:
-   - 30-second countdown starts on first tile selection
-   - 5-second bonus for each successful match (capped at 30 seconds)
-   - Visual warning when under 10 seconds
-   - Timer resets to 30 seconds when advancing to new level
+   - Stopwatch starts on first tile selection
+   - 3-second penalty added for incorrect matches
+   - Visual feedback shows "+3" in red when penalty applied
+   - Timer continues through level completion
 9. **Game Controls**:
    - New Game button disabled until first tile selection
    - Prevents accidental restarts before gameplay begins
@@ -52,7 +51,9 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 - `score`: Points earned (100 per match)
 - `matches`: Number of successful matches
 - `level`: Current level (advances after 12 matches)
-- `timeRemaining`: Current time left (starts at 30 seconds)
+- `timeElapsed`: Current elapsed time in seconds
+- `currentMatchStartTime`: Timestamp when current match attempt started
+- `characterStats`: Object tracking performance data per character
 - `hasStarted`: Boolean tracking if timer has started
 - `isGameOver`: Boolean for game over state
 - `isAnimating`: Prevents interactions during animations
@@ -89,12 +90,13 @@ The game includes all 46 basic kana:
 - `handleTileClick()`: Manages tile selection, type checking, and starts timer on first click
 - `updateFadedTiles()`: Applies fade effect to same-type tiles
 - `checkMatch()`: Validates if selected tiles form a valid match
-- `processMatch()`: Handles match animation, tile removal, and time bonus
+- `processMatch()`: Handles match animation, tile removal, and character stats tracking
 - `handleMismatch()`: Shows shake animation for incorrect matches
 - `checkAutoMatch()`: Detects and processes final 3 tiles automatically
-- `updateTimer()`: Updates timer display and progress bar
-- `addBonusTime()`: Adds time bonus with visual feedback
-- `gameOver()`: Handles game over state when timer expires
+- `updateTimer()`: Updates timer display
+- `addPenalty()`: Adds penalty time with visual feedback
+- `gameOver()`: Shows level completion and character performance statistics
+- `showCharacterStats()`: Displays detailed character performance data
 
 ## Educational Design
 
@@ -111,7 +113,7 @@ The game includes all 46 basic kana:
 - Total of 46 basic kana implemented (complete hiragana/katakana chart)
 - Random selection ensures different characters each game
 - Infinite progression - game continues with new random selections
-- Timer resets to 30 seconds when advancing levels
+- Timer continues counting through levels for total session time
 - Tiles are shuffled using Fisher-Yates algorithm for random board layouts
 - No memorizable patterns - true character recognition required
 
@@ -143,15 +145,18 @@ The game includes all 46 basic kana:
    - Timer pauses during animation to prevent unfair game over
    - All user input blocked during auto-match sequence
 4. **Timer System**:
-   - 30-second countdown with visual progress bar
+   - Stopwatch counting up from 0 seconds
    - Timer starts on first tile selection
-   - 5-second bonus per match (max 30 seconds)
-   - Warning animation when under 10 seconds
-   - Pauses during auto-match to ensure fairness
-5. **Dual Progress Bars**:
+   - 3-second penalty for incorrect matches
+   - Red pulse animation and "+3" display for penalties
+5. **Progress Bar**:
    - Gold bar shows level completion progress
-   - Green/red bar shows time remaining
-6. **Level Progression Fix**: Properly handles level 2 with only 8 new kana
+6. **Character Performance Tracking**:
+   - Tracks response time for each character match
+   - Records incorrect attempts per character
+   - Calculates average response time
+   - Shows top 5 most challenging characters at level completion
+   - Press 'd' during gameplay to toggle debug stats view
 7. **Full Mobile Optimization**:
    - Responsive design fits all phone sizes
    - No zooming or scrolling allowed
@@ -175,9 +180,8 @@ The game includes all 46 basic kana:
 
 - Shake animation for incorrect matches with red background pulse
 - No text message for mismatches - visual feedback only
-- Timer bar changes to red when time is low
-- Smooth transitions for time bonuses
-- Both progress bars match game grid width
+- Timer text pulses red during penalty animation
+- Progress bar matches game grid width
 - Mobile-specific sizing for all UI elements
 - Gradient background properly displays on all devices
 
@@ -229,6 +233,19 @@ Single HTML file containing:
 - Inline JavaScript
 - No external dependencies
 - Self-contained and portable
+
+### Character Statistics Structure
+
+```javascript
+characterStats[kanaIndex] = {
+    attempts: number,      // Total match attempts
+    incorrect: number,     // Failed match attempts
+    totalTime: number,     // Total response time in milliseconds
+    avgTime: number        // Average response time
+}
+```
+
+This data will be used for implementing a spaced repetition system (SRS) in the future, where characters with slower response times or more errors will appear more frequently.
 
 ## Other Ideas
 
