@@ -852,8 +852,8 @@
           const tile2 = board[selectedTiles[1].row][selectedTiles[1].col];
 
           if (tile1.kanaIndex !== tile2.kanaIndex) {
-            // Mismatch! Shake both tiles and clear selection
-            handleMismatch();
+            // Mismatch! Shake second tile but keep first selected
+            handleMismatch(1);
             return;
           }
         }
@@ -986,7 +986,7 @@
         boardEl.appendChild(line);
       }
 
-      function handleMismatch() {
+      function handleMismatch(keepTiles = 0) {
         isAnimating = true;
 
         // Add 3-second penalty
@@ -1012,8 +1012,9 @@
         // Add red pulse to background
         document.body.classList.add("error-pulse");
 
-        // Get tile elements and add shake animation
-        selectedTiles.forEach(({ row, col }) => {
+        // Get tile elements and add shake animation (only shake the incorrect tiles)
+        const tilesToShake = selectedTiles.slice(keepTiles);
+        tilesToShake.forEach(({ row, col }) => {
           const tile = document.querySelector(
             `[data-row="${row}"][data-col="${col}"]`,
           );
@@ -1032,8 +1033,8 @@
           // Remove error pulse
           document.body.classList.remove("error-pulse");
 
-          // Clear selection
-          selectedTiles = [];
+          // Keep only the specified number of tiles
+          selectedTiles = selectedTiles.slice(0, keepTiles);
           updateSelectedTiles();
           updateFadedTiles();
           updateNeededTypes();
@@ -1052,8 +1053,8 @@
           // Valid match!
           processMatch();
         } else {
-          // Invalid match - use the same shake animation
-          handleMismatch();
+          // Invalid match - shake third tile but keep first two selected
+          handleMismatch(2);
         }
       }
 

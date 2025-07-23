@@ -30,7 +30,9 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 3. **Progress Tracking**: Progress bar showing level completion
 4. **Hint System**: Highlights a valid match set when clicked
 5. **Dynamic Instructions**: Text updates to show which tile types are still needed
-6. **Early Mismatch Detection**: Tiles shake when second selection doesn't match the first
+6. **Smart Mismatch Handling**: 
+   - When second tile doesn't match first: only second tile shakes and is deselected, first remains selected
+   - When third tile doesn't match first two: only third tile shakes and is deselected, first two remain selected and connected
 7. **Auto-Match**: Final 3 tiles automatically match with visual sequence
    - User input disabled during auto-match
 8. **Timer System**:
@@ -91,7 +93,7 @@ The game includes all 46 basic kana:
 - `updateFadedTiles()`: Applies fade effect to same-type tiles
 - `checkMatch()`: Validates if selected tiles form a valid match
 - `processMatch()`: Handles match animation, tile removal, and character stats tracking
-- `handleMismatch()`: Shows shake animation for incorrect matches
+- `handleMismatch(keepTiles)`: Shows shake animation for incorrect matches, keeping specified number of tiles selected
 - `checkAutoMatch()`: Detects and processes final 3 tiles automatically
 - `updateTimer()`: Updates timer display
 - `addPenalty()`: Adds penalty time with visual feedback
@@ -139,7 +141,11 @@ The game includes all 46 basic kana:
 
 ### New Features Added
 
-1. **Early Mismatch Detection**: Second tile selection triggers immediate validation with shake animation and red background pulse
+1. **Smart Mismatch Handling**: 
+   - Second tile selection triggers immediate validation
+   - Incorrect second tile: shakes and deselects only the second tile, keeping first selected
+   - Incorrect third tile: shakes and deselects only the third tile, keeping first two selected
+   - Red background pulse on any mismatch
 2. **Enhanced Fade Effect**: Unavailable tiles now fade to 15% opacity with grayscale filter
 3. **Auto-Match System**: Final 3 tiles automatically match with staggered selection animation
    - Timer pauses during animation to prevent unfair game over
