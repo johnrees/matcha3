@@ -13,14 +13,16 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
   - Represent the same sound (e.g., あ, ア, a)
   - Are from different writing systems (one hiragana, one katakana, one romaji)
 - **Visual Feedback**: When a tile is selected, all other tiles of the same type fade to 15% opacity with grayscale effect
-- **Completion**: Matched tiles disappear with animation, leaving empty spaces on the board
-- **Timing System**: Stopwatch counts up from 0 seconds
+- **Completion**: Matched tiles disappear with animation, new tiles are added dynamically
+- **Timing System**: Stopwatch counts up from 0 seconds (displays as XmYs format after 60s)
+- **Dynamic Character Addition**: All 46 kana appear throughout a single game session
 
 ### Visual Design
 
 - **Hiragana**: Pink background (#FFB6C1) with darker pink border (#FF69B4)
 - **Katakana**: Blue background (#87CEEB) with darker blue border (#4682B4)
 - **Romaji**: Green background (#90EE90) with darker green border (#32CD32)
+- **Unavailable**: Grey background (#808080) with darker grey border (#606060) - for incomplete character sets
 - **Typography**: Noto Sans JP font for proper Japanese character rendering
 
 ### Key Features
@@ -37,10 +39,17 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
    - User input disabled during auto-match
 8. **Timer System**:
    - Stopwatch starts on first tile selection
-   - Timer continues through level completion
-9. **Game Controls**:
+   - Timer continues through entire game session
+   - Formats as "Xs" under 60 seconds, "XmYs" after
+9. **Dynamic Tile System**:
+   - New tiles added to empty spaces after matches
+   - Partial character sets (1-2 tiles) added strategically
+   - Characters become matchable when all 3 types are present
+   - Each kana appears exactly once per game
+10. **Game Controls**:
    - New Game button disabled until first tile selection
    - Prevents accidental restarts before gameplay begins
+   - Unavailable tiles cannot be clicked
 
 ## Technical Implementation
 
@@ -49,11 +58,14 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
 - `board`: 6x6 array storing tile objects
 - `selectedTiles`: Array of currently selected tile positions
 - `score`: Points earned (100 per match)
-- `matches`: Number of successful matches
-- `level`: Current level (advances after 12 matches)
+- `matches`: Number of successful matches (out of 46 total)
+- `level`: Current level (single continuous session)
 - `timeElapsed`: Current elapsed time in seconds
 - `currentMatchStartTime`: Timestamp when current match attempt started
 - `characterStats`: Object tracking performance data per character
+- `usedKanaIndices`: Set of kana indices already added to the game
+- `remainingKanaIndices`: Array of kana indices not yet added
+- `boardCharacterCounts`: Tracks which character types are on board
 - `hasStarted`: Boolean tracking if timer has started
 - `isGameOver`: Boolean for game over state
 - `isAnimating`: Prevents interactions during animations
@@ -93,7 +105,10 @@ The game includes all 46 basic kana:
 - `processMatch()`: Handles match animation, tile removal, and character stats tracking
 - `handleMismatch(keepTiles)`: Shows shake animation for incorrect matches, keeping specified number of tiles selected
 - `checkAutoMatch()`: Detects and processes final 3 tiles automatically
-- `updateTimer()`: Updates timer display
+- `updateTimer()`: Updates timer display with minute formatting
+- `canCharacterMatch()`: Checks if a character has all 3 types on board
+- `updateBoardCharacterCounts()`: Tracks character availability
+- `addNewTiles()`: Adds new tiles after matches, prevents duplicates
 - `gameOver()`: Shows level completion and character performance statistics
 - `showCharacterStats()`: Displays detailed character performance data
 
@@ -108,13 +123,14 @@ The game includes all 46 basic kana:
 
 ### Progression System
 
-- Each level presents 12 randomly selected kana from the full set
-- Total of 46 basic kana implemented (complete hiragana/katakana chart)
-- Random selection ensures different characters each game
-- Infinite progression - game continues with new random selections
-- Timer continues counting through levels for total session time
-- Tiles are shuffled using Fisher-Yates algorithm for random board layouts
-- No memorizable patterns - true character recognition required
+- Single game session includes all 46 basic kana characters
+- Initial board starts with 12 complete character sets
+- New characters added dynamically as matches are made
+- Partial sets (1-2 tiles) create strategic gameplay
+- Characters become matchable once all 3 types are present
+- Game completes when all 46 kana have been matched
+- No duplicate characters - each kana appears exactly once
+- Empty spaces remain when no new characters available
 
 ## Future Enhancements
 
@@ -128,11 +144,11 @@ The game includes all 46 basic kana:
 
 ### Potential Features
 
-- Time-based challenges
-- Multiplayer competition
-- Spaced repetition algorithm
-- Custom character sets
-- Achievement system
+- Audio pronunciation for each character
+- Spaced repetition algorithm using collected stats
+- Speed run modes and leaderboards
+- Practice mode with specific character sets
+- Achievement system for learning milestones
 
 ## Recent Updates
 
@@ -182,6 +198,8 @@ The game includes all 46 basic kana:
 - Shake animation for incorrect matches with red background pulse
 - No text message for mismatches - visual feedback only
 - Progress bar matches game grid width
+- Unavailable tiles shown in grey with reduced opacity
+- Timer displays in "Xs" or "XmYs" format
 - Mobile-specific sizing for all UI elements
 - Gradient background properly displays on all devices
 
@@ -250,3 +268,15 @@ This data will be used for implementing a spaced repetition system (SRS) in the 
 ## Other Ideas
 
 - you can ignore everything in other_ideas unless otherwise instructed
+
+## Latest Updates (Most Recent)
+
+### Major Gameplay Changes
+
+1. **Single Session Gameplay**: Removed level-based progression in favor of one continuous game featuring all 46 characters
+2. **Dynamic Tile Addition**: New tiles are added to empty spaces after matches, introducing characters progressively
+3. **Partial Character Sets**: Characters may appear as incomplete sets (1-2 tiles), becoming matchable only when all 3 types are present
+4. **No Duplicates**: Each kana character appears exactly once throughout the entire game session
+5. **Improved Selection UX**: When making incorrect matches, correctly selected tiles remain selected
+6. **Timer Format**: Time display now formats as "XmYs" after 60 seconds (e.g., "1m23s")
+7. **Removed Penalties**: No more 3-second penalties for incorrect matches - pure performance tracking

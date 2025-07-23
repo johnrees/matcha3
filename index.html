@@ -128,6 +128,14 @@
         border-color: #32cd32;
       }
 
+      /* Unavailable tiles that can't be matched yet */
+      .tile.unavailable {
+        background: #808080;
+        border-color: #606060;
+        opacity: 0.6;
+        cursor: not-allowed;
+      }
+
       /* Faded state for tiles of same type */
       .tile.faded {
         opacity: 0.15;
@@ -564,7 +572,7 @@
           Matches: <span id="matches">0</span> /
           <span id="totalMatches">12</span>
         </div>
-        <div class="stat timer">Time: <span id="timer">0</span>s</div>
+        <div class="stat timer">Time: <span id="timer">0s</span></div>
       </div>
       <div class="needed-types" id="neededTypes"></div>
       <div class="game-board" id="gameBoard"></div>
@@ -659,6 +667,9 @@
       let isAutoMatching = false;
       let currentMatchStartTime = 0;
       let characterStats = {};
+      let usedKanaIndices = new Set();
+      let remainingKanaIndices = [];
+      let boardCharacterCounts = {};
 
       function initGame() {
         board = [];
@@ -669,6 +680,9 @@
         hasStarted = false;
         timeElapsed = 0;
         currentMatchStartTime = 0;
+        usedKanaIndices = new Set();
+        remainingKanaIndices = [];
+        boardCharacterCounts = {};
 
         // Clear any existing timer
         if (timerInterval) {
@@ -686,21 +700,26 @@
           newGameBtn.disabled = true;
         }
 
-        // Select random kana for this level
-        // Create array of all indices
-        const allIndices = Array.from({length: kanaMap.length}, (_, i) => i);
+        // Initialize with all kana indices available
+        remainingKanaIndices = Array.from({length: kanaMap.length}, (_, i) => i);
         
-        // Shuffle all indices
-        for (let i = allIndices.length - 1; i > 0; i--) {
+        // Shuffle remaining indices
+        for (let i = remainingKanaIndices.length - 1; i > 0; i--) {
           const j = Math.floor(Math.random() * (i + 1));
-          [allIndices[i], allIndices[j]] = [allIndices[j], allIndices[i]];
+          [remainingKanaIndices[i], remainingKanaIndices[j]] = [remainingKanaIndices[j], remainingKanaIndices[i]];
         }
         
-        // Take 12 random kana
-        kanaPool = allIndices.slice(0, 12).map(i => kanaMap[i]);
+        // Start with 12 kana for initial board
+        const initialKanaCount = 12;
+        kanaPool = [];
+        for (let i = 0; i < initialKanaCount && remainingKanaIndices.length > 0; i++) {
+          const kanaIndex = remainingKanaIndices.shift();
+          usedKanaIndices.add(kanaIndex);
+          kanaPool.push(kanaMap[kanaIndex]);
+        }
 
-        // Update total matches based on actual kana pool size
-        totalMatches = kanaPool.length;
+        // Update total matches to be all 46 kana
+        totalMatches = 46;
         updateStats();
 
         // Create tiles for the board
@@ -746,7 +765,33 @@
           }
         }
 
+        // Update board character counts
+        updateBoardCharacterCounts();
         renderBoard();
+      }
+
+      function canCharacterMatch(kanaIndex) {
+        // Check if all three types of this character are on the board
+        const count = boardCharacterCounts[kanaIndex] || { hiragana: 0, katakana: 0, romaji: 0 };
+        return count.hiragana > 0 && count.katakana > 0 && count.romaji > 0;
+      }
+
+      function updateBoardCharacterCounts() {
+        // Reset counts
+        boardCharacterCounts = {};
+        
+        // Count characters on board
+        for (let row = 0; row < 6; row++) {
+          for (let col = 0; col < 6; col++) {
+            const tile = board[row][col];
+            if (tile) {
+              if (!boardCharacterCounts[tile.kanaIndex]) {
+                boardCharacterCounts[tile.kanaIndex] = { hiragana: 0, katakana: 0, romaji: 0 };
+              }
+              boardCharacterCounts[tile.kanaIndex][tile.type]++;
+            }
+          }
+        }
       }
 
       function renderBoard() {
@@ -761,23 +806,29 @@
             if (!tile) {
               tileElement.className = "tile empty";
             } else {
-              tileElement.className = `tile ${tile.type}`;
+              // Check if this character can be matched (has all 3 types on board)
+              const canMatch = canCharacterMatch(tile.kanaIndex);
+              
+              tileElement.className = `tile ${canMatch ? tile.type : 'unavailable'}`;
               tileElement.dataset.row = row;
               tileElement.dataset.col = col;
               tileElement.textContent = tile.display;
-              // Add both click and touch events for mobile
-              tileElement.addEventListener("click", (e) => {
-                e.preventDefault();
-                handleTileClick(row, col);
-              });
-              tileElement.addEventListener(
-                "touchstart",
-                (e) => {
+              
+              if (canMatch) {
+                // Add both click and touch events for mobile
+                tileElement.addEventListener("click", (e) => {
                   e.preventDefault();
                   handleTileClick(row, col);
-                },
-                { passive: false },
-              );
+                });
+                tileElement.addEventListener(
+                  "touchstart",
+                  (e) => {
+                    e.preventDefault();
+                    handleTileClick(row, col);
+                  },
+                  { passive: false },
+                );
+              }
             }
 
             gameBoard.appendChild(tileElement);
@@ -790,6 +841,11 @@
       function handleTileClick(row, col) {
         if (isAnimating || !board[row][col] || isGameOver || isAutoMatching)
           return;
+          
+        // Check if this character can be matched
+        if (!canCharacterMatch(board[row][col].kanaIndex)) {
+          return;
+        }
 
         // Start timer on first interaction
         if (!hasStarted) {
@@ -879,8 +935,9 @@
           const isSelected = selectedTiles.some(
             (t) => t.row === row && t.col === col,
           );
+          const canMatch = canCharacterMatch(board[row][col].kanaIndex);
 
-          if (!isSelected && selectedTypes.includes(tileType)) {
+          if (!canMatch || (!isSelected && selectedTypes.includes(tileType))) {
             tile.classList.add("faded");
           } else {
             tile.classList.remove("faded");
@@ -1110,6 +1167,12 @@
             .forEach((line) => line.remove());
           updateNeededTypes();
 
+          // Add new tiles to empty spaces
+          addNewTiles();
+          
+          // Update board character counts
+          updateBoardCharacterCounts();
+          
           // Re-render board
           renderBoard();
           
@@ -1119,7 +1182,7 @@
           // Check for auto-match condition (only 3 tiles left)
           checkAutoMatch();
 
-          // Check if level complete
+          // Check if all 46 kana have been matched
           if (matches === totalMatches) {
             setTimeout(() => {
               gameOver();
@@ -1321,7 +1384,14 @@
 
       function updateTimer() {
         const timerEl = document.getElementById("timer");
-        timerEl.textContent = timeElapsed;
+        
+        if (timeElapsed < 60) {
+          timerEl.textContent = timeElapsed + "s";
+        } else {
+          const minutes = Math.floor(timeElapsed / 60);
+          const seconds = timeElapsed % 60;
+          timerEl.textContent = minutes + "m" + seconds + "s";
+        }
       }
 
       function gameOver() {
@@ -1424,6 +1494,124 @@
       
       // Update debug stats periodically if visible
       setInterval(updateDebugStats, 1000);
+      
+      function addNewTiles() {
+        // Find empty positions
+        const emptyPositions = [];
+        for (let row = 0; row < 6; row++) {
+          for (let col = 0; col < 6; col++) {
+            if (!board[row][col]) {
+              emptyPositions.push({ row, col });
+            }
+          }
+        }
+        
+        if (emptyPositions.length === 0) {
+          return;
+        }
+        
+        // Get kana indices that are currently on the board
+        const kanaOnBoard = new Set();
+        for (let row = 0; row < 6; row++) {
+          for (let col = 0; col < 6; col++) {
+            if (board[row][col]) {
+              kanaOnBoard.add(board[row][col].kanaIndex);
+            }
+          }
+        }
+        
+        // Shuffle empty positions
+        for (let i = emptyPositions.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1));
+          [emptyPositions[i], emptyPositions[j]] = [emptyPositions[j], emptyPositions[i]];
+        }
+        
+        // First, check if we need to complete any partial sets that are already on board
+        const partialSets = [];
+        for (const [kanaIndex, counts] of Object.entries(boardCharacterCounts)) {
+          const total = counts.hiragana + counts.katakana + counts.romaji;
+          if (total > 0 && total < 3) {
+            // This is a partial set
+            const missingTypes = [];
+            if (counts.hiragana === 0) missingTypes.push('hiragana');
+            if (counts.katakana === 0) missingTypes.push('katakana');
+            if (counts.romaji === 0) missingTypes.push('romaji');
+            partialSets.push({ kanaIndex: parseInt(kanaIndex), missingTypes });
+          }
+        }
+        
+        // Randomly complete some partial sets (not all at once)
+        if (partialSets.length > 0 && Math.random() < 0.7) { // 70% chance to complete partial sets
+          const setsToComplete = Math.min(Math.floor(Math.random() * 2) + 1, partialSets.length);
+          const shuffledPartials = [...partialSets];
+          // Shuffle partial sets
+          for (let i = shuffledPartials.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledPartials[i], shuffledPartials[j]] = [shuffledPartials[j], shuffledPartials[i]];
+          }
+          
+          for (let i = 0; i < setsToComplete && emptyPositions.length > 0; i++) {
+            const partial = shuffledPartials[i];
+            const kana = kanaMap[partial.kanaIndex];
+            
+            for (const type of partial.missingTypes) {
+              if (emptyPositions.length > 0) {
+                const pos = emptyPositions.shift();
+                board[pos.row][pos.col] = {
+                  kana,
+                  kanaIndex: partial.kanaIndex,
+                  type,
+                  display: kana[type]
+                };
+              }
+            }
+          }
+        }
+        
+        // Then add new partial sets (only if we have remaining kana that aren't on board)
+        const availableIndices = remainingKanaIndices.filter(idx => !kanaOnBoard.has(idx));
+        
+        while (emptyPositions.length > 0 && availableIndices.length > 0) {
+          const idx = Math.floor(Math.random() * availableIndices.length);
+          const kanaIndex = availableIndices.splice(idx, 1)[0];
+          // Remove from remainingKanaIndices as well
+          const remainingIdx = remainingKanaIndices.indexOf(kanaIndex);
+          if (remainingIdx !== -1) {
+            remainingKanaIndices.splice(remainingIdx, 1);
+          }
+          
+          usedKanaIndices.add(kanaIndex);
+          const kana = kanaMap[kanaIndex];
+          
+          // Randomly decide how many tiles to add (1-2)
+          const tilesToAdd = Math.random() < 0.5 ? 1 : 2;
+          
+          // Randomly select which types to add
+          const types = ['hiragana', 'katakana', 'romaji'];
+          const shuffledTypes = [...types];
+          for (let i = shuffledTypes.length - 1; i > 0; i--) {
+            const j = Math.floor(Math.random() * (i + 1));
+            [shuffledTypes[i], shuffledTypes[j]] = [shuffledTypes[j], shuffledTypes[i]];
+          }
+          
+          // Add the tiles
+          for (let i = 0; i < tilesToAdd && emptyPositions.length > 0; i++) {
+            const pos = emptyPositions.shift();
+            const type = shuffledTypes[i];
+            board[pos.row][pos.col] = {
+              kana,
+              kanaIndex,
+              type,
+              display: kana[type]
+            };
+          }
+          
+          // If we've filled all positions, stop
+          if (emptyPositions.length === 0) {
+            break;
+          }
+        }
+      }
 
       // Prevent pull-to-refresh and overscroll on mobile
       document.addEventListener(
