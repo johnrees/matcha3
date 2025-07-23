@@ -71,10 +71,6 @@
         color: #ffd700;
       }
 
-      .stat.timer.penalty span {
-        color: #ff6b6b;
-        animation: pulse 0.5s ease;
-      }
 
       @keyframes pulse {
         0%,
@@ -989,9 +985,6 @@
       function handleMismatch(keepTiles = 0) {
         isAnimating = true;
 
-        // Add 3-second penalty
-        addPenalty(3);
-
         // Track incorrect attempts for these characters
         const tiles = selectedTiles.map(({ row, col }) => board[row][col]);
         tiles.forEach(tile => {
@@ -1329,27 +1322,6 @@
       function updateTimer() {
         const timerEl = document.getElementById("timer");
         timerEl.textContent = timeElapsed;
-      }
-
-      function addPenalty(seconds) {
-        const timerStatEl = document.querySelector(".stat.timer");
-
-        // Add penalty time
-        timeElapsed += seconds;
-        updateTimer();
-
-        // Visual feedback for penalty
-        timerStatEl.classList.add("penalty");
-
-        // Show penalty text
-        const timerEl = document.getElementById("timer");
-        const originalContent = timerEl.innerHTML;
-        timerEl.innerHTML = timeElapsed + ' <span style="color:#ff6b6b">+3</span>';
-
-        setTimeout(() => {
-          timerStatEl.classList.remove("penalty");
-          timerEl.innerHTML = timeElapsed;
-        }, 1000);
       }
 
       function gameOver() {

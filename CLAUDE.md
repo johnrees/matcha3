@@ -14,7 +14,7 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
   - Are from different writing systems (one hiragana, one katakana, one romaji)
 - **Visual Feedback**: When a tile is selected, all other tiles of the same type fade to 15% opacity with grayscale effect
 - **Completion**: Matched tiles disappear with animation, leaving empty spaces on the board
-- **Timing System**: Stopwatch counts up from 0 seconds with 3-second penalty for incorrect matches
+- **Timing System**: Stopwatch counts up from 0 seconds
 
 ### Visual Design
 
@@ -37,8 +37,6 @@ Matcha3! is an educational match-3 puzzle game designed to teach Japanese hiraga
    - User input disabled during auto-match
 8. **Timer System**:
    - Stopwatch starts on first tile selection
-   - 3-second penalty added for incorrect matches
-   - Visual feedback shows "+3" in red when penalty applied
    - Timer continues through level completion
 9. **Game Controls**:
    - New Game button disabled until first tile selection
@@ -96,7 +94,6 @@ The game includes all 46 basic kana:
 - `handleMismatch(keepTiles)`: Shows shake animation for incorrect matches, keeping specified number of tiles selected
 - `checkAutoMatch()`: Detects and processes final 3 tiles automatically
 - `updateTimer()`: Updates timer display
-- `addPenalty()`: Adds penalty time with visual feedback
 - `gameOver()`: Shows level completion and character performance statistics
 - `showCharacterStats()`: Displays detailed character performance data
 
@@ -153,8 +150,6 @@ The game includes all 46 basic kana:
 4. **Timer System**:
    - Stopwatch counting up from 0 seconds
    - Timer starts on first tile selection
-   - 3-second penalty for incorrect matches
-   - Red pulse animation and "+3" display for penalties
 5. **Progress Bar**:
    - Gold bar shows level completion progress
 6. **Character Performance Tracking**:
@@ -186,7 +181,6 @@ The game includes all 46 basic kana:
 
 - Shake animation for incorrect matches with red background pulse
 - No text message for mismatches - visual feedback only
-- Timer text pulses red during penalty animation
 - Progress bar matches game grid width
 - Mobile-specific sizing for all UI elements
 - Gradient background properly displays on all devices
