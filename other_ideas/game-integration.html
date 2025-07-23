@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html>
+<head>
+  <title>Matcha3! with Reducer Pattern</title>
+  <style>
+    /* Existing styles */
+    .tile { /* ... */ }
+    .tile.shake { animation: shake 0.5s ease-in-out; }
+    .tile.match-animation { animation: disappear 0.6s ease-out; }
+    .error-pulse { animation: pulse-red 0.5s ease-in-out; }
+  </style>
+</head>
+<body>
+  <div id="menu">
+    <h1>Matcha3! 🍵</h1>
+    <button onclick="game.startGame()">Start Game</button>
+  </div>
+  
+  <div id="game" style="display: none;">
+    <div id="stats">
+      <div>Score: <span id="score">0</span></div>
+      <div>Matches: <span id="matches">0</span>/12</div>
+      <div>Time: <span id="timer">30</span>s</div>
+    </div>
+    
+    <div id="message"></div>
+    <div id="gameBoard"></div>
+    
+    <button id="newGameBtn" onclick="game.startGame()">New Game</button>
+  </div>
+  
+  <div id="gameOver" style="display: none;">
+    <h2>Game Over!</h2>
+    <button onclick="game.startGame()">Play Again</button>
+  </div>
+
+  <script src="game-reducer.js"></script>
+  <script>
+    // Create game instance
+    const game = new GameStore();
+    
+    // Subscribe to state changes
+    game.subscribe(state => {
+      const ui = deriveUIState(state);
+      
+      // Update body classes
+      document.body.className = ui.showErrorPulse ? 'error-pulse' : '';
+      
+      // Show correct screen
+      document.getElementById('menu').style.display = 
+        ui.showMenu ? 'block' : 'none';
+      document.getElementById('game').style.display = 
+        ui.showGame ? 'block' : 'none';
+      document.getElementById('gameOver').style.display = 
+        ui.showGameOver ? 'block' : 'none';
+      
+      if (ui.showGame) {
+        updateGameUI(state, ui);
+      }
+    });
+    
+    function updateGameUI(state, ui) {
+      // Update stats
+      document.getElementById('score').textContent = state.score;
+      document.getElementById('matches').textContent = state.matches;
+      document.getElementById('timer').textContent = state.timeRemaining;
+      document.getElementById('timer').className = ui.timerWarning ? 'warning' : '';
+      
+      // Update message
+      const message = ui.neededTypes.length > 0 
+        ? `Need: ${ui.neededTypes.join(', ')}`
+        : state.selectedTiles.length > 0 
+          ? 'Complete! All 3 types selected'
+          : 'Select 3 matching characters';
+      document.getElementById('message').textContent = message;
+      
+      // Update new game button
+      document.getElementById('newGameBtn').disabled = ui.newGameDisabled;
+      
+      // Render board
+      renderBoard(state, ui);
+    }
+    
+    function renderBoard(state, ui) {
+      const board = document.getElementById('gameBoard');
+      board.innerHTML = '';
+      
+      state.board.forEach((row, rowIndex) => {
+        row.forEach((tile, colIndex) => {
+          const div = document.createElement('div');
+          
+          if (!tile) {
+            div.className = 'tile empty';
+          } else {
+            const tileState = ui.getTileState(rowIndex, colIndex);
+            
+            const classes = ['tile', tile.type];
+            if (tileState.isSelected) classes.push('selected');
+            if (tileState.isShaking) classes.push('shake');
+            if (tileState.isMatching) classes.push('match-animation');
+            if (!tileState.isSelected && ui.fadedTypes.includes(tile.type)) {
+              classes.push('faded');
+            }
+            
+            div.className = classes.join(' ');
+            div.textContent = tile.display;
+            
+            if (ui.canInteract) {
+              div.onclick = () => game.selectTile(rowIndex, colIndex);
+            }
+          }
+          
+          board.appendChild(div);
+        });
+      });
+    }
+    
+    // Add the generateBoard function and other helpers
+    function generateBoard(level) {
+      // Your existing implementation
+      const tiles = [];
+      // ... create tiles
+      return board;
+    }
+    
+    function deriveNeededTypes(selectedTiles, board) {
+      if (selectedTiles.length === 0) return [];
+      
+      const selectedTypes = selectedTiles
+        .map(pos => board[pos.row][pos.col]?.type)
+        .filter(Boolean);
+      
+      const allTypes = ['hiragana', 'katakana', 'romaji'];
+      return allTypes.filter(type => !selectedTypes.includes(type));
+    }
+  </script>
+</body>
+</html>

@@ -230,4 +230,6 @@ Single HTML file containing:
 - No external dependencies
 - Self-contained and portable
 
-This design creates an engaging educational experience that makes learning Japanese characters intuitive and enjoyable through game mechanics.
+## Other Ideas
+
+- you can ignore everything in other_ideas unless otherwise instructed

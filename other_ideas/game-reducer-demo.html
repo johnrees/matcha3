@@ -1,0 +1,532 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>Matcha3! - Reducer Pattern</title>
+    <link href="https://fonts.googleapis.com/css2?family=Noto+Sans+JP:wght@400;700&display=swap" rel="stylesheet">
+    <style>
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            -webkit-tap-highlight-color: transparent;
+        }
+
+        html {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            background-attachment: fixed;
+            min-height: 100vh;
+        }
+
+        body {
+            font-family: 'Noto Sans JP', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 10px;
+            background-color: transparent;
+        }
+
+        .game-container {
+            background: rgba(255, 255, 255, 0.95);
+            border-radius: 20px;
+            padding: 30px;
+            box-shadow: 0 20px 60px rgba(0, 0, 0, 0.3);
+            text-align: center;
+            max-width: 600px;
+            width: 100%;
+        }
+
+        h1 {
+            color: #333;
+            margin-bottom: 30px;
+            font-size: 2.5em;
+            text-shadow: 2px 2px 4px rgba(0, 0, 0, 0.1);
+        }
+
+        .stats {
+            display: flex;
+            justify-content: space-around;
+            margin-bottom: 20px;
+            gap: 20px;
+        }
+
+        .stat {
+            background: #f0f0f0;
+            padding: 10px 20px;
+            border-radius: 10px;
+            font-size: 1.1em;
+            flex: 1;
+        }
+
+        .stat span {
+            font-weight: bold;
+            color: #667eea;
+        }
+
+        .timer {
+            background: #FFE5B4;
+        }
+
+        .timer.warning {
+            background: #FFB6C1;
+            animation: pulse 1s infinite;
+        }
+
+        .timer.warning span {
+            color: #ff4444;
+        }
+
+        @keyframes pulse {
+            0%, 100% { transform: scale(1); }
+            50% { transform: scale(1.05); }
+        }
+
+        .needed-types {
+            margin-bottom: 20px;
+            font-size: 1.1em;
+            color: #666;
+            min-height: 30px;
+        }
+
+        .game-board {
+            display: grid;
+            grid-template-columns: repeat(6, 1fr);
+            gap: 10px;
+            margin-bottom: 20px;
+            max-width: 500px;
+            margin-left: auto;
+            margin-right: auto;
+        }
+
+        .tile {
+            aspect-ratio: 1;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 1.8em;
+            font-weight: bold;
+            border-radius: 10px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            border: 3px solid transparent;
+            user-select: none;
+            -webkit-user-select: none;
+        }
+
+        .tile.empty {
+            background: transparent;
+            cursor: default;
+        }
+
+        .tile.disabled {
+            cursor: not-allowed;
+        }
+
+        .tile.hiragana {
+            background: #FFB6C1;
+            border-color: #FF69B4;
+            color: #8B0000;
+        }
+
+        .tile.katakana {
+            background: #87CEEB;
+            border-color: #4682B4;
+            color: #00008B;
+        }
+
+        .tile.romaji {
+            background: #90EE90;
+            border-color: #32CD32;
+            color: #006400;
+        }
+
+        .tile:not(.empty):not(.disabled):hover {
+            transform: scale(1.05);
+            box-shadow: 0 5px 15px rgba(0, 0, 0, 0.2);
+        }
+
+        .tile.selected {
+            transform: scale(0.95);
+            box-shadow: inset 0 3px 10px rgba(0, 0, 0, 0.3);
+            border-width: 4px;
+        }
+
+        .tile.faded {
+            opacity: 0.15;
+            filter: grayscale(50%);
+        }
+
+        .tile.shake {
+            animation: shake 0.5s ease-in-out;
+        }
+
+        @keyframes shake {
+            0%, 100% { transform: translateX(0); }
+            10%, 30%, 50%, 70%, 90% { transform: translateX(-5px); }
+            20%, 40%, 60%, 80% { transform: translateX(5px); }
+        }
+
+        .tile.match-animation {
+            animation: disappear 0.6s ease-out forwards;
+        }
+
+        @keyframes disappear {
+            0% { 
+                transform: scale(1) rotate(0deg);
+                opacity: 1;
+            }
+            100% { 
+                transform: scale(0) rotate(360deg);
+                opacity: 0;
+            }
+        }
+
+        .progress-bar {
+            width: 100%;
+            height: 20px;
+            background: #e0e0e0;
+            border-radius: 10px;
+            overflow: hidden;
+            margin-bottom: 10px;
+        }
+
+        .progress-fill {
+            height: 100%;
+            background: linear-gradient(90deg, #667eea, #764ba2);
+            transition: width 0.3s ease;
+        }
+
+        .timer-bar {
+            width: 100%;
+            height: 10px;
+            background: #e0e0e0;
+            border-radius: 5px;
+            overflow: hidden;
+            margin-bottom: 20px;
+        }
+
+        .timer-fill {
+            height: 100%;
+            background: #4CAF50;
+            transition: width 1s linear;
+        }
+
+        .timer-bar.warning .timer-fill {
+            background: #ff4444;
+        }
+
+        .timer-fill.bonus-animation {
+            animation: bonus-flash 0.3s ease-out;
+        }
+
+        @keyframes bonus-flash {
+            0%, 100% { background: #4CAF50; }
+            50% { background: #8BC34A; }
+        }
+
+        button {
+            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+            color: white;
+            border: none;
+            padding: 15px 30px;
+            font-size: 1.1em;
+            border-radius: 50px;
+            cursor: pointer;
+            transition: all 0.3s ease;
+            margin: 5px;
+            font-weight: bold;
+            font-family: 'Noto Sans JP', sans-serif;
+        }
+
+        button:hover:not(:disabled) {
+            transform: translateY(-2px);
+            box-shadow: 0 5px 20px rgba(102, 126, 234, 0.4);
+        }
+
+        button:active:not(:disabled) {
+            transform: translateY(0);
+        }
+
+        button:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .hint-button {
+            background: linear-gradient(135deg, #f093fb 0%, #f5576c 100%);
+        }
+
+        body.error-pulse {
+            animation: pulse-red 0.5s ease-in-out;
+        }
+
+        @keyframes pulse-red {
+            0%, 100% { background-color: transparent; }
+            50% { background-color: rgba(255, 0, 0, 0.1); }
+        }
+
+        .screen {
+            display: none;
+        }
+
+        .screen.active {
+            display: block;
+        }
+
+        /* Mobile optimizations */
+        @media (max-width: 600px) {
+            body {
+                padding: 5px;
+            }
+
+            .game-container {
+                padding: 15px;
+                border-radius: 15px;
+            }
+
+            h1 {
+                font-size: 2em;
+                margin-bottom: 20px;
+            }
+
+            .stats {
+                gap: 10px;
+            }
+
+            .stat {
+                padding: 8px 12px;
+                font-size: 0.9em;
+            }
+
+            .game-board {
+                gap: 5px;
+            }
+
+            .tile {
+                font-size: 1.4em;
+                border-width: 2px;
+            }
+
+            .tile.selected {
+                border-width: 3px;
+            }
+
+            button {
+                padding: 12px 24px;
+                font-size: 1em;
+            }
+
+            .needed-types {
+                font-size: 1em;
+            }
+        }
+
+        @media (max-width: 400px) {
+            .tile {
+                font-size: 1.2em;
+            }
+        }
+    </style>
+</head>
+<body>
+    <div class="game-container">
+        <div id="menu" class="screen active">
+            <h1>Matcha3! 🍵</h1>
+            <p style="margin-bottom: 30px; color: #666;">Match hiragana, katakana, and romaji characters!</p>
+            <button onclick="game.startGame()">Start Game</button>
+        </div>
+        
+        <div id="game" class="screen">
+            <h1>Matcha3! 🍵</h1>
+            
+            <div class="stats">
+                <div class="stat">
+                    <div>Score</div>
+                    <span id="score">0</span>
+                </div>
+                <div class="stat">
+                    <div>Matches</div>
+                    <span id="matches">0</span> / <span>12</span>
+                </div>
+                <div class="stat timer" id="timerStat">
+                    <div>Time</div>
+                    <span id="timer">30</span>s
+                </div>
+            </div>
+            
+            <div class="needed-types" id="message">Select 3 matching characters (one of each type)</div>
+            
+            <div class="game-board" id="gameBoard"></div>
+            
+            <div class="progress-bar">
+                <div class="progress-fill" id="progressFill" style="width: 0%;"></div>
+            </div>
+            
+            <div class="timer-bar" id="timerBar">
+                <div class="timer-fill" id="timerFill" style="width: 100%;"></div>
+            </div>
+            
+            <div>
+                <button id="newGameBtn" onclick="game.startGame()">New Game</button>
+                <button class="hint-button" onclick="showHint()">Show Hint</button>
+            </div>
+        </div>
+        
+        <div id="gameOver" class="screen">
+            <h1>Time's Up! ⏰</h1>
+            <p style="margin: 20px 0; color: #666; font-size: 1.2em;">
+                Final Score: <span id="finalScore" style="color: #667eea; font-weight: bold;">0</span>
+            </p>
+            <button onclick="game.startGame()">Play Again</button>
+        </div>
+    </div>
+
+    <script src="game-reducer.js"></script>
+    <script>
+        // Create game instance
+        const game = new GameStore();
+        
+        // Subscribe to state changes
+        game.subscribe(state => {
+            const ui = deriveUIState(state);
+            
+            // Update body classes
+            document.body.className = ui.showErrorPulse ? 'error-pulse' : '';
+            
+            // Show correct screen
+            document.getElementById('menu').classList.toggle('active', ui.showMenu);
+            document.getElementById('game').classList.toggle('active', ui.showGame);
+            document.getElementById('gameOver').classList.toggle('active', ui.showGameOver);
+            
+            if (ui.showGame) {
+                updateGameUI(state, ui);
+            } else if (ui.showGameOver) {
+                document.getElementById('finalScore').textContent = state.score;
+            }
+        });
+        
+        function updateGameUI(state, ui) {
+            // Update stats
+            document.getElementById('score').textContent = state.score;
+            document.getElementById('matches').textContent = state.matches;
+            document.getElementById('timer').textContent = state.timeRemaining;
+            
+            // Update timer warning
+            const timerStat = document.getElementById('timerStat');
+            timerStat.className = `stat timer ${ui.timerWarning ? 'warning' : ''}`;
+            
+            // Update timer bar
+            const timerBar = document.getElementById('timerBar');
+            timerBar.className = `timer-bar ${ui.timerWarning ? 'warning' : ''}`;
+            const timerFill = document.getElementById('timerFill');
+            timerFill.style.width = `${(state.timeRemaining / 30) * 100}%`;
+            timerFill.className = `timer-fill ${state.animation === 'match' ? 'bonus-animation' : ''}`;
+            
+            // Update progress bar
+            const progressFill = document.getElementById('progressFill');
+            progressFill.style.width = `${(state.matches / 12) * 100}%`;
+            
+            // Update message
+            const message = ui.neededTypes.length > 0 
+                ? `Need: ${ui.neededTypes.join(', ')}`
+                : state.selectedTiles.length > 0 
+                    ? 'Complete! All 3 types selected'
+                    : 'Select 3 matching characters (one of each type)';
+            document.getElementById('message').textContent = message;
+            
+            // Update new game button
+            document.getElementById('newGameBtn').disabled = ui.newGameDisabled;
+            
+            // Render board
+            renderBoard(state, ui);
+        }
+        
+        function renderBoard(state, ui) {
+            const board = document.getElementById('gameBoard');
+            board.innerHTML = '';
+            
+            state.board.forEach((row, rowIndex) => {
+                row.forEach((tile, colIndex) => {
+                    const div = document.createElement('div');
+                    
+                    if (!tile) {
+                        div.className = 'tile empty';
+                    } else {
+                        const tileState = ui.getTileState(rowIndex, colIndex);
+                        
+                        const classes = ['tile', tile.type];
+                        if (tileState.isSelected) classes.push('selected');
+                        if (tileState.isShaking) classes.push('shake');
+                        if (tileState.isMatching) classes.push('match-animation');
+                        if (!tileState.isSelected && ui.fadedTypes.includes(tile.type)) {
+                            classes.push('faded');
+                        }
+                        if (!ui.canInteract) {
+                            classes.push('disabled');
+                        }
+                        
+                        div.className = classes.join(' ');
+                        div.textContent = tile.display;
+                        
+                        if (ui.canInteract) {
+                            div.onclick = () => game.selectTile(rowIndex, colIndex);
+                            div.ontouchstart = (e) => {
+                                e.preventDefault();
+                                game.selectTile(rowIndex, colIndex);
+                            };
+                        }
+                    }
+                    
+                    board.appendChild(div);
+                });
+            });
+        }
+        
+        // Simple hint function
+        function showHint() {
+            // Find a valid match
+            const state = game.state;
+            const tiles = [];
+            
+            state.board.forEach((row, rowIndex) => {
+                row.forEach((tile, colIndex) => {
+                    if (tile) {
+                        tiles.push({ tile, row: rowIndex, col: colIndex });
+                    }
+                });
+            });
+            
+            // Group by kanaIndex
+            const groups = {};
+            tiles.forEach(t => {
+                if (!groups[t.tile.kanaIndex]) {
+                    groups[t.tile.kanaIndex] = [];
+                }
+                groups[t.tile.kanaIndex].push(t);
+            });
+            
+            // Find a complete set
+            for (const kanaIndex in groups) {
+                const group = groups[kanaIndex];
+                const types = group.map(g => g.tile.type);
+                if (types.includes('hiragana') && types.includes('katakana') && types.includes('romaji')) {
+                    // Highlight these tiles
+                    group.forEach(g => {
+                        const tile = document.querySelector(`.game-board > :nth-child(${g.row * 6 + g.col + 1})`);
+                        if (tile) {
+                            tile.style.boxShadow = '0 0 20px gold';
+                            setTimeout(() => {
+                                tile.style.boxShadow = '';
+                            }, 2000);
+                        }
+                    });
+                    break;
+                }
+            }
+        }
+    </script>
+</body>
+</html>
